@@ -841,8 +841,8 @@ reg_plot <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
        subtitle = "Max Water Temp ~ Mean Air Temp",
        x="Daily Mean Air temperature (°C)",
        y="Daily Max Water temperature (°C)") + 
-geom_text(x = 15, y = 18, label = lm_eqn(airwater_join), parse = TRUE)  + 
-geom_text(x = 15, y = 17, label = paste("Pearson R:", round(correlation,3))) +
+geom_text(x = 16, y = 19, label = lm_eqn(airwater_join), parse = TRUE)  + 
+geom_text(x = 16, y = 18, label = paste("Pearson R:", round(correlation,3))) +
   theme(plot.title = element_text(size=12, face="bold"),
         plot.subtitle = element_text(size = 11)) +
   theme(axis.text=element_text(size=11),
