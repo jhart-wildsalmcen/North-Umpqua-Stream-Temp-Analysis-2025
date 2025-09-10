@@ -149,6 +149,7 @@ reg_plot
 # Export plot to file
 #ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_21679180.png", height = 4, width = 6)
 
+
 ```
 
 # Big Bend Cr. at mouth
@@ -324,6 +325,31 @@ reg_plot
 
 # Export plot to file
 #ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_15170014.png", height = 4, width = 6)
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+  
+## Number of days above 20C Plot
+  
+temp <- BigBend %>% 
+  filter(month_day > '06-19' & month_day <= '09-15') %>% 
+  group_by(year) %>%
+  summarize(conditional_count = sum(max_temp > 20))
+
+
+BigBend_Dyas20_Plot <- ggplot(data=temp) +
+  geom_col(aes(x=as.factor(year),y=conditional_count), fill="brown3", color="black",alpha=0.5) +
+  geom_path(aes(x=as.factor(year),y=conditional_count, group = 1), size=1.25) +
+  geom_point(aes(x=as.factor(year),y=conditional_count), size =4) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,6)) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(title= "Big Bend Cr. at mouth", y="# of Days", x="Year") +
+  theme(plot.subtitle = element_text(size = 10),
+        plot.title = element_text(size=18, face="bold")) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14))
+
+BigBend_Dyas20_Plot
   
 ```
 
@@ -619,6 +645,30 @@ reg_plot
 
 # Export plot to file
 #ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_15170003.png", height = 4, width = 6)
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+  
+## Number of days above 20C Plot
+  
+temp <- SteamboatCant %>% 
+  filter(month_day > '06-19' & month_day <= '09-15') %>% 
+  group_by(year) %>%
+  summarize(conditional_count = sum(max_temp > 20))
+
+SteamboatCant_Days20_Plot <- ggplot(data=temp) +
+  geom_col(aes(x=as.factor(year),y=conditional_count), fill="brown3", color="black",alpha=0.5) +
+  geom_path(aes(x=as.factor(year),y=conditional_count, group = 1), size=1.25) +
+  geom_point(aes(x=as.factor(year),y=conditional_count), size =4) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,75), breaks = seq(0,70,by=10)) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(title= "Steamboat above Canton Cr.", y="# of Days", x="Year") +
+  theme(plot.subtitle = element_text(size = 10),
+        plot.title = element_text(size=18, face="bold")) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14))
+
+SteamboatCant_Days20_Plot
 ```
 
 # Upper Canton Cr.
@@ -1029,6 +1079,30 @@ reg_plot
 
 #Export plot to file
 #ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_15110003.png", height = 4, width = 6)
+
+------------------------------------------------------------------------------------------------------------------------------
+
+## Number of days above 20C Plot
+  
+temp <- FishCr %>% 
+  filter(month_day > '06-19' & month_day <= '09-15') %>% 
+  group_by(year) %>%
+  summarize(conditional_count = sum(max_temp > 20))
+
+FishCr_Days20_Plot <- ggplot(data=temp) +
+  geom_col(aes(x=as.factor(year),y=conditional_count), fill="brown3", color="black",alpha=0.5) +
+  geom_path(aes(x=as.factor(year),y=conditional_count, group = 1), size=1.25) +
+  geom_point(aes(x=as.factor(year),y=conditional_count), size =4) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,11), breaks = seq(0,10,by=2)) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(title= "Fish Cr. at mouth", y="# of Days", x="Year") +
+  theme(plot.subtitle = element_text(size = 10),
+        plot.title = element_text(size=18, face="bold")) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14))
+
+FishCr_Days20_Plot
  
 ```
 
