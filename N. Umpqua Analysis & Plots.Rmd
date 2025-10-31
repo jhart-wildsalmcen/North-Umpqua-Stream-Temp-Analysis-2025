@@ -1,12 +1,13 @@
 ---
 title: "N. Umpqua Temperature Analysis"
+subtitle: "Summer-run Steelhead Ecology and Conservation in the North Umpqua Basin: Genetic Insights and Management Opportunities, (Pepping et al., 2026)"
 author: "J.Hart"
 date: "2025-08-23"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 ```
 
 
@@ -20,15 +21,15 @@ library(writexl)
 library(readr)
 ```
 
-# 21679180 - Steamboat Above Big Bend Cr.
-# 15170014 - Big Bend at mouth
-# 21679175 - Steamboat below Big Bend Cr.
-# 15170003 - Steamboat above Canton Cr.
-# 21679177 - Upper Canton Cr.
-# 21433141 - N. Umpqua above Steamboat Cr.
-# 15110003 - Fish Cr. at mouth
+#### 21679180 - Steamboat Above Big Bend Cr.
+#### 15170014 - Big Bend at mouth
+#### 21679175 - Steamboat below Big Bend Cr.
+#### 15170003 - Steamboat above Canton Cr.
+#### 21679177 - Upper Canton Cr.
+#### 21433141 - N. Umpqua above Steamboat Cr.
+#### 15110003 - Fish Cr. at mouth
 
-```{r}
+```{r Read in 2024 WSC temp data}
 # Read in 2024 temp logger data summaries
 
 daily_water_master <- read_xlsx("2024 Logger Sites/Water/daily_water_master.xlsx")
@@ -36,59 +37,67 @@ daily_air_master <- read_xlsx("2024 Logger Sites/Air/daily_air_master.xlsx")
 ```
 
 # Steamboat Above Big Bend Cr.
-```{r S_AboveBigBend}
+```{r Steamboat_AboveBigBend - Stats}
+# Logger ID: 21679180
 
 # Read in data and filter for summer season
-S_AboveBigBend <- daily_water_master %>% 
+Steam_AboveBigBend <- daily_water_master %>% 
   filter(logger_id == 21679180 & longdate > '2024-06-19' & longdate <= '2024-09-15')
 
-# 2024 Max Temp
-S_AboveBigBend_maxt <- S_AboveBigBend %>% 
-  summarize(maxt = max(max_temp))
+# 2024 max temp
+Steam_AboveBigBend_MaxT <- max(Steam_AboveBigBend$max_temp)
+print(Steam_AboveBigBend_MaxT)
  
-# 2024 # Days above 20C
-S_AboveBigBend_Days20 <- S_AboveBigBend %>% 
-  filter(max_temp > 20) %>% 
-  summarize(days20 = n())
+# 2024 number of days above 20C
+Steam_AboveBigBend_DaysOver20 <- sum(Steam_AboveBigBend$max_temp > 20)
+print(Steam_AboveBigBend_DaysOver20)
 
--------------------------------------------------------------------------------
+```
+
+```{r Steamboat_AboveBigBend - Temp Plot}
+
 ### Mean, Min, Max Temp Plot 
 
 # Plot data frame
-temp <- S_AboveBigBend
+temp <- Steam_AboveBigBend
 
 x=as.Date(temp$longdate)
 y_lower = 20
 y_upper = Inf
 
-# Create temp plot
+# Create temperature plot
 plot_21679180 <- ggplot() +
-  geom_hline(yintercept = 20, linetype = "dotted", size=1) +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth = 1) +
   geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
-  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth =1) +
-  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth =0.5) +
-  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth =0.5) +
-  
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 0.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 0.5) +
   scale_colour_manual("", 
                       breaks = c("mean_temp", "min_temp", "max_temp"),
                       values = c("black", "blue", "red"),
                       labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
   scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
-  scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by=2)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by= 2)) +
   theme_bw() +
-  theme(legend.position = "none") +
-  labs(title= "Steamboat above Big Bend Cr.", y="Temperature (°C)", x="") +
+  labs(title= "Steamboat above Big Bend Cr.",
+       y="Temperature (°C)", 
+       x="") +
   theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold")) +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14))
+        plot.title = element_text(size= 14, face="bold"),
+        axis.text=element_text(size= 12),
+        axis.title=element_text(size= 14), 
+        legend.position = "bottom")
+
+rm(temp)
 
 plot_21679180
 
 # Export plot to file
-# ggsave(file="2024 Logger Sites/Water/Fig Plots/plot_21679180.png", height = 3, width = 6)
+# ggsave(plot_21679180, file="Figure Plots/Temp Plots/Temp Plot_SteamboatAboveBigBend.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
 
---------------------------------------------------------------------------------------
+```
+
+```{r Steamboat_AboveBigBend - Regression Plot}
 ## Air/Water Regression Plot
 
 # Prepare air logger data for regression
@@ -110,7 +119,6 @@ airwater_join <- water %>%
   left_join(air, by = "longdate")
 
 # Create equation formula for regression equation
-
 lm_eqn <- function(df){
     m <- lm(water_max ~ air_mean, df);
     eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
@@ -122,70 +130,63 @@ lm_eqn <- function(df){
 
 # Calculate Pearson correlation coefficient
 correlation <- cor(water$max_temp, air$mean_temp, method = 'pearson')
-correlation
+print(correlation)
 
+# Linear model fit summary
 fit <- lm(airwater_join$water_max ~ airwater_join$air_mean)
 summary(fit)
 
-
 # Create regression plot
-reg_plot <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
-  geom_point(color='blue') +
+reg_plot_21679180 <- ggplot(airwater_join, aes(x= air_mean, y = water_max)) +
+  geom_point(shape= 21, color='black', fill= 'deepskyblue3', size = 2) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
- labs(title="Steamboat above Big Bend Cr. (Air - N. Umpqua at Steamboat)",
+  labs(title="Steamboat above Big Bend Cr. (Air - N. Umpqua at Steamboat)",
        subtitle = "Max Water Temp ~ Mean Air Temp",
        x="Daily Mean Air temperature (°C)",
        y="Daily Max Water temperature (°C)") + 
-geom_text(x = 16, y = 24, label = lm_eqn(airwater_join), parse = TRUE)  + 
-geom_text(x = 16, y = 23, label = paste("Pearson R:", round(correlation,3))) +
-  theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11)) +
-  theme(axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
+  geom_text(x = 16, y = 24, label = lm_eqn(airwater_join), parse = TRUE)  + 
+  geom_text(x = 16, y = 23, label = paste("Pearson R:", round(correlation,3))) +
+  theme(plot.title = element_text(size= 12, face="bold"),
+        plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size= 11),
+        axis.title=element_text(size= 14)) 
 
-reg_plot
+reg_plot_21679180
 
 # Export plot to file
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_21679180.png", height = 4, width = 6)
-
-
+# ggsave(reg_plot_21679180, file="Figure Plots/Regression Plots/regression_plot_SteamboatAboveBigBend.png", height = 4, width = 6)
 ```
 
+
 # Big Bend Cr. at mouth
-```{r Big Bend}
-# Read in Big Bend USB Data
+```{r Big Bend stats}
+# Read in Big Bend data, clean, and summarize daily mean, min, max temp statistics
 
 list_of_files <- list.files(path = "USB Files/Big Bend",
                             recursive = TRUE,
                             pattern = "\\.csv$",
                             full.names = TRUE)
 
-BigBend <- readr::read_csv(list_of_files, id = "file_name") 
-
-# Clean and format data for analysis
-BigBend <- BigBend %>% 
+BigBend <- readr::read_csv(list_of_files, id = "file_name") %>% 
   clean_names() %>% 
   mutate(site = "Big Bend Cr. at mouth") %>% 
-  mutate(temp_c = (temp - 32) * (5/9)) %>% 
+  mutate(temp_c = (temp - 32) * (5/9)) %>% #temp in F, need to convert to C
   mutate(logger_id = "15170014") %>% 
   mutate(longdate = as.Date(date,format = "%m/%d/%Y")) %>% 
   separate(longdate,
                   into = c('year', 'month', 'day'),
                   sep= '-',
                   remove = FALSE) %>% 
-  mutate(month_day = format(longdate, "%m-%d"))
-  
-# Calculate daily summary stats
-BigBend <- BigBend %>% 
+  mutate(month_day = format(longdate, "%m-%d")) %>% 
   group_by(longdate, month_day,year,logger_id) %>% 
-  summarise(mean_temp = round(mean(temp_c), digits=2),
-            min_temp = round(min(temp_c), digits=2),
-            max_temp = round(max(temp_c), digits=2))
+  summarise(mean_temp = round(mean(temp_c), digits= 2),
+            min_temp = round(min(temp_c), digits= 2),
+            max_temp = round(max(temp_c), digits= 2))
 
-## Calculate temperature statistics
+## Calculate other temperature statistics
 
-# Max T (2024)
+# Max temp (2024)
 BigBend_maxt_2024 <- BigBend %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   group_by(logger_id) %>% 
@@ -198,7 +199,7 @@ BigBend_Days20_2024 <- BigBend %>%
   group_by(logger_id) %>% 
   summarise(days_over20 = n())
 
-# Max T (10-yr Avg.)
+# Max temp (10-yr Avg.)
 BigBend_maxt_10yrAvg <- BigBend %>% 
   filter(month_day > '06-19' & month_day <= '09-15') %>% 
   group_by(logger_id,year) %>% 
@@ -213,7 +214,7 @@ BigBend_Days20_10yrAvg <- BigBend %>%
   summarise(days_over20 = n()) %>% 
   summarise(days_over20_avg = sum(days_over20) / 10)
 
-# Max T (Drought)  
+# Max Temp (Drought)  
   BigBend_maxt_drought <- BigBend %>% 
   filter(year == '2021' | year == '2022') %>% 
   filter(month_day > '06-19' & month_day <= '09-15') %>% 
@@ -229,8 +230,10 @@ BigBend_Days20_10yrAvg <- BigBend %>%
   summarise(days_over20 = n()) %>% 
   summarise(days_over20_avg = sum(days_over20) / 2)
   
--------------------------------------------------------------------------------
-### Mean, Min, Max Temp Plot 
+```
+
+```{r Big Bend Temp Plots}
+## Mean, Min, Max Temp Plot 
 
 # Data frame for plot
 temp <- BigBend %>% 
@@ -242,32 +245,64 @@ y_upper = Inf
 
 # Create temp plot
 plot_15170014 <- ggplot() +
-  geom_hline(yintercept = 20, linetype = "dotted", size=1) +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth = 1) +
   geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
-  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth =1) +
-  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth =0.5) +
-  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth =0.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 0.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 0.5) +
   
   scale_colour_manual("", 
                       breaks = c("mean_temp", "min_temp", "max_temp"),
                       values = c("black", "blue", "red"),
                       labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
   scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
-  scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by=2)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by= 2)) +
   theme_bw() +
-  theme(legend.position = "none") +
   labs(title= "Big Bend Cr. at mouth", y="Temperature (°C)", x="") +
   theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold")) +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14))
+        plot.title = element_text(size= 14, face="bold"),
+        axis.text=element_text(size= 12),
+        axis.title=element_text(size= 14),
+        legend.position = "bottom")
+
+rm(temp)
 
 plot_15170014
 
 # Export plot to file 
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/plot_15170014.png", height = 3, width = 6)
+# ggsave(plot_15170014, file="Figure Plots/Temp Plots/Temp Plot_BigBend.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
 
---------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
+## Number of days above 20C plot
+  
+temp <- BigBend %>% 
+  filter(month_day > '06-19' & month_day <= '09-15') %>% 
+  group_by(year) %>%
+  summarize(conditional_count = sum(max_temp > 20))
+
+
+BigBend_Days20_Plot <- ggplot(data=temp) +
+  geom_col(aes(x=as.factor(year),y=conditional_count), fill="brown3", color="black",alpha=0.5) +
+  geom_path(aes(x=as.factor(year),y=conditional_count, group = 1), size=1.25) +
+  geom_point(aes(x=as.factor(year),y=conditional_count), size =4) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,6)) +
+  theme_bw() +
+  labs(title= "Big Bend Cr. at mouth", y="# of Days", x="Year") +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14),
+        plot.subtitle = element_text(size = 10),
+        plot.title = element_text(size=18, face="bold"),
+        legend.position = "none")
+
+rm(temp)
+
+BigBend_Days20_Plot
+
+# Export plot to file 
+# ggsave(BigBend_Days20_Plot, file="Figure Plots/Temp Plots/DaysOver20C_BigBend.png", height = 4, width = 6) 
+```
+
+```{r Big Bend Regression Plot}
 ## Air/Water Regression Plot
 
 # Prepare air logger data for regression
@@ -287,7 +322,6 @@ airwater_join <- water %>%
   left_join(air, by = "longdate")
 
 # Create equation formula for regression equation
-
 lm_eqn <- function(df){
     m <- lm(water_max ~ air_mean, df);
     eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
@@ -299,59 +333,34 @@ lm_eqn <- function(df){
 
 # Calculate Pearson correlation coefficient
 correlation <- cor(water$max_temp, air$mean_temp, method = 'pearson')
-correlation
+print(correlation)
 
+# Linear model fit summary
 fit <- lm(airwater_join$water_max ~ airwater_join$air_mean)
 summary(fit)
 
-  
 # Create regression plot
-reg_plot <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
-  geom_point(color='blue') +
+reg_plot_15170014 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
+  geom_point(shape= 21, color='black', fill= 'deepskyblue3', size = 2) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
- labs(title="Big Bend Cr. at mouth (Air - N. Umpqua at Steamboat)",
+  labs(title="Big Bend Cr. at mouth (Air - N. Umpqua at Steamboat)",
        subtitle = "Max Water Temp ~ Mean Air Temp",
        x="Daily Mean Air temperature (°C)",
        y="Daily Max Water temperature (°C)") + 
-geom_text(x = 16, y = 19, label = lm_eqn(airwater_join), parse = TRUE)  + 
-geom_text(x = 16, y = 18, label = paste("Pearson R:", round(correlation,3))) +
+  geom_text(x = 16, y = 19, label = lm_eqn(airwater_join), parse = TRUE)  + 
+  geom_text(x = 16, y = 18, label = paste("Pearson R:", round(correlation,3))) +
   theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11)) +
-  theme(axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
+        plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size=11),
+         axis.title=element_text(size=14)) 
 
-reg_plot
+reg_plot_15170014
 
 # Export plot to file
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_15170014.png", height = 4, width = 6)
-
--------------------------------------------------------------------------------------------------------------------------------------------------
-  
-## Number of days above 20C Plot
-  
-temp <- BigBend %>% 
-  filter(month_day > '06-19' & month_day <= '09-15') %>% 
-  group_by(year) %>%
-  summarize(conditional_count = sum(max_temp > 20))
-
-
-BigBend_Dyas20_Plot <- ggplot(data=temp) +
-  geom_col(aes(x=as.factor(year),y=conditional_count), fill="brown3", color="black",alpha=0.5) +
-  geom_path(aes(x=as.factor(year),y=conditional_count, group = 1), size=1.25) +
-  geom_point(aes(x=as.factor(year),y=conditional_count), size =4) +
-  scale_y_continuous(expand = c(0,0), limits = c(0,6)) +
-  theme_bw() +
-  theme(legend.position = "none") +
-  labs(title= "Big Bend Cr. at mouth", y="# of Days", x="Year") +
-  theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=18, face="bold")) +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14))
-
-BigBend_Dyas20_Plot
-  
+# ggsave(reg_plot_15170014, file="Figure Plots/Regression Plots/regression_plot_BigBend.png", height = 4, width = 6)
 ```
+
 
 # Steamboat Below Big Bend Cr.
 ```{r S_BelowBigBend}
@@ -470,6 +479,7 @@ reg_plot
 
 ```
 
+
 # Steamboat Above Canton Cr.
 ```{r Steamboat Above Canton}
 
@@ -485,7 +495,7 @@ SteamboatCant <- readr::read_csv(list_of_files, id = "file_name")
 SteamboatCant <- SteamboatCant %>% 
   clean_names() %>% 
   mutate(site = "Steamboat above Canton Cr.") %>% 
-  mutate(temp_c = (temp - 32) * (5/9)) %>% 
+  mutate(temp_c = (temp - 32) * (5/9)) %>% #temp in F, need to convert to C
   mutate(logger_id = "15170003") %>% 
   mutate(longdate = as.Date(date,format = "%m/%d/%Y")) %>% 
   separate(longdate,
@@ -671,6 +681,7 @@ SteamboatCant_Days20_Plot <- ggplot(data=temp) +
 SteamboatCant_Days20_Plot
 ```
 
+
 # Upper Canton Cr.
 ```{r UpperCanton}
 
@@ -788,6 +799,7 @@ reg_plot
 
 ```
 
+
 # N. Umpqua above Steamboat
 ```{r NUmpqua_AboveSteam}
 
@@ -904,6 +916,7 @@ reg_plot
 #ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_21433141.png", height = 4, width = 6)
 ```
 
+
 # Fish Cr. at mouth
 ```{r Fish Cr}
 # Read in Fish Cr. USB Data
@@ -919,7 +932,7 @@ FishCr <- readr::read_csv(list_of_files, id = "file_name")
 FishCr<- FishCr %>% 
   clean_names() %>% 
   mutate(site = "Fish Cr. at mouth") %>% 
-  mutate(temp_c = (temp - 32) * (5/9)) %>% 
+  mutate(temp_c = (temp - 32) * (5/9)) %>% #temp in F, need to convert to C
   mutate(logger_id = "15110003") %>% 
   mutate(longdate = as.Date(date,format = "%m/%d/%Y")) %>% 
   separate(longdate,
@@ -1106,7 +1119,7 @@ FishCr_Days20_Plot
  
 ```
 
-#3.5C Warming Climate Scenario Predict
+# 3.5C Warming Climate Scenario Predictions
 ```{r}
 # y = 7.98+0.645x	
 S_AboveBigBend_climate <- airwater_join %>%
