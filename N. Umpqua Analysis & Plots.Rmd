@@ -3,7 +3,6 @@ title: "N. Umpqua Temperature Analysis"
 author: "J.Hart"
 date: "2025-08-23"
 output:
-  pdf_document: default
   html_document: default
 subtitle: "Summer-run Steelhead Ecology and Conservation in the North Umpqua Basin:
   Genetic Insights and Management Opportunities, (Pepping et al., 2026)"
@@ -47,7 +46,7 @@ daily_air_master <- read_xlsx("2024 Logger Sites/Air/daily_air_master.xlsx")
 
 ```{r Define functions for regression analysis}
 
-# Air logger look up function
+# Air logger look up function 
 air_logger <- function(log_id){
   daily_air_master %>% 
   filter(logger_id == log_id) %>% 
@@ -80,6 +79,15 @@ lm_eqn <- function(df){
              r2 = format(summary(m)$adj.r.squared, digits = 3)))
     as.character(as.expression(eq));
 }                 
+
+# Function to predict future water temperature scenario and estimate # of days above 20C (summer season)
+future_climate_predict <- function(df) {
+  new_temps = data.frame(air_mean = airwater_join$air_mean + 3.5) # Create vector of new air temps under 3.5C warming scenario
+  fit = lm(water_max ~ air_mean, data = airwater_join) # Define lm
+  watertemp_pred = predict(fit, newdata = new_temps) # Use lm to predict new water temps using updated air temps
+  daysover20_future = data_frame(daysover20 = sum(watertemp_pred > 20)) # Estimate number of days water temp above 20C given future climate scenario 
+  print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20})) # Print results 
+}
 ```
 
 
@@ -190,18 +198,8 @@ reg_plot_21679180
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
+future_climate_predict()
 
-# Use lm to predict new water temps using updated air temps
-watertemp_pred <- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
-print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
-
-rm(new_temps)
-rm(watertemp_pred)
 ```
 <br>
 
@@ -409,18 +407,7 @@ reg_plot_15170014
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred <- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
-print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
-
-rm(new_temps)
-rm(watertemp_pred)
+future_climate_predict()
 ```
 <br>
 
@@ -526,18 +513,7 @@ reg_plot_21679175
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred <- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
-print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
-
-rm(new_temps)
-rm(watertemp_pred)
+future_climate_predict()
 
 ```
 <br>
@@ -744,18 +720,7 @@ reg_plot_15170003
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred <- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
-print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
-
-rm(new_temps)
-rm(watertemp_pred)
+future_climate_predict()
 
 ```
 <br>
@@ -865,18 +830,7 @@ reg_plot_21679177
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred <- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
-print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
-
-rm(new_temps)
-rm(watertemp_pred)
+future_climate_predict()
 ```
 <br>
 
@@ -983,18 +937,7 @@ reg_plot_21433141
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred <- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
-print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
-
-rm(new_temps)
-rm(watertemp_pred)
+future_climate_predict()
 ```
 <br>
 
@@ -1202,17 +1145,5 @@ reg_plot_15110003
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred <- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
-print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
-
-rm(new_temps)
-rm(watertemp_pred)
-
+future_climate_predict()
 ```

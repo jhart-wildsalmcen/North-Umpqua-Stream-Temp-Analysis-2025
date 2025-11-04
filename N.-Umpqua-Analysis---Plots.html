@@ -403,7 +403,7 @@ library(readr)</code></pre>
 daily_water_master &lt;- read_xlsx(&quot;2024 Logger Sites/Water/daily_water_master.xlsx&quot;)
 daily_air_master &lt;- read_xlsx(&quot;2024 Logger Sites/Air/daily_air_master.xlsx&quot;)</code></pre>
 <p><br></p>
-<pre class="r"><code># Air logger look up function
+<pre class="r"><code># Air logger look up function 
 air_logger &lt;- function(log_id){
   daily_air_master %&gt;% 
   filter(logger_id == log_id) %&gt;% 
@@ -435,7 +435,16 @@ lm_eqn &lt;- function(df){
               b = format(unname(coef(m)[2]), digits = 3),
              r2 = format(summary(m)$adj.r.squared, digits = 3)))
     as.character(as.expression(eq));
-}                 </code></pre>
+}                 
+
+# Function to predict future water temperature scenario and estimate # of days above 20C (summer season)
+future_climate_predict &lt;- function(df) {
+  new_temps = data.frame(air_mean = airwater_join$air_mean + 3.5) # Create vector of new air temps under 3.5C warming scenario
+  fit = lm(water_max ~ air_mean, data = airwater_join) # Define lm
+  watertemp_pred = predict(fit, newdata = new_temps) # Use lm to predict new water temps using updated air temps
+  daysover20_future = data_frame(daysover20 = sum(watertemp_pred &gt; 20)) # Estimate number of days water temp above 20C given future climate scenario 
+  print(paste(&quot;Predicted # days above 20C (+3.5C future climate):&quot;, {daysover20_future$daysover20})) # Print results 
+}</code></pre>
 </div>
 </div>
 <div id="steamboat-above-big-bend-cr.-1" class="section level1">
@@ -554,18 +563,8 @@ reg_plot_21679180</code></pre>
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps &lt;- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred &lt;- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future &lt;- data_frame(daysover20 = sum(watertemp_pred &gt; 20))
-print(paste(&quot;Predicted # days above 20C (+3.5C future climate):&quot;, {daysover20_future$daysover20}))</code></pre>
+future_climate_predict()</code></pre>
 <pre><code>## [1] &quot;Predicted # days above 20C (+3.5C future climate): 84&quot;</code></pre>
-<pre class="r"><code>rm(new_temps)
-rm(watertemp_pred)</code></pre>
 <p><br></p>
 </div>
 <div id="big-bend-cr.-at-mouth" class="section level1">
@@ -784,18 +783,8 @@ reg_plot_15170014</code></pre>
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps &lt;- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred &lt;- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future &lt;- data_frame(daysover20 = sum(watertemp_pred &gt; 20))
-print(paste(&quot;Predicted # days above 20C (+3.5C future climate):&quot;, {daysover20_future$daysover20}))</code></pre>
+future_climate_predict()</code></pre>
 <pre><code>## [1] &quot;Predicted # days above 20C (+3.5C future climate): 21&quot;</code></pre>
-<pre class="r"><code>rm(new_temps)
-rm(watertemp_pred)</code></pre>
 <p><br></p>
 </div>
 <div id="steamboat-below-big-bend-cr.-1" class="section level1">
@@ -912,18 +901,8 @@ reg_plot_21679175</code></pre>
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps &lt;- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred &lt;- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future &lt;- data_frame(daysover20 = sum(watertemp_pred &gt; 20))
-print(paste(&quot;Predicted # days above 20C (+3.5C future climate):&quot;, {daysover20_future$daysover20}))</code></pre>
+future_climate_predict()</code></pre>
 <pre><code>## [1] &quot;Predicted # days above 20C (+3.5C future climate): 55&quot;</code></pre>
-<pre class="r"><code>rm(new_temps)
-rm(watertemp_pred)</code></pre>
 <p><br></p>
 </div>
 <div id="steamboat-above-canton-cr.-1" class="section level1">
@@ -1138,18 +1117,8 @@ reg_plot_15170003</code></pre>
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps &lt;- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred &lt;- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future &lt;- data_frame(daysover20 = sum(watertemp_pred &gt; 20))
-print(paste(&quot;Predicted # days above 20C (+3.5C future climate):&quot;, {daysover20_future$daysover20}))</code></pre>
+future_climate_predict()</code></pre>
 <pre><code>## [1] &quot;Predicted # days above 20C (+3.5C future climate): 84&quot;</code></pre>
-<pre class="r"><code>rm(new_temps)
-rm(watertemp_pred)</code></pre>
 <p><br></p>
 </div>
 <div id="upper-canton-cr.-1" class="section level1">
@@ -1267,18 +1236,8 @@ reg_plot_21679177</code></pre>
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps &lt;- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred &lt;- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future &lt;- data_frame(daysover20 = sum(watertemp_pred &gt; 20))
-print(paste(&quot;Predicted # days above 20C (+3.5C future climate):&quot;, {daysover20_future$daysover20}))</code></pre>
+future_climate_predict()</code></pre>
 <pre><code>## [1] &quot;Predicted # days above 20C (+3.5C future climate): 67&quot;</code></pre>
-<pre class="r"><code>rm(new_temps)
-rm(watertemp_pred)</code></pre>
 <p><br></p>
 </div>
 <div id="n.-umpqua-above-steamboat" class="section level1">
@@ -1395,18 +1354,8 @@ reg_plot_21433141</code></pre>
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps &lt;- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred &lt;- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future &lt;- data_frame(daysover20 = sum(watertemp_pred &gt; 20))
-print(paste(&quot;Predicted # days above 20C (+3.5C future climate):&quot;, {daysover20_future$daysover20}))</code></pre>
+future_climate_predict()</code></pre>
 <pre><code>## [1] &quot;Predicted # days above 20C (+3.5C future climate): 7&quot;</code></pre>
-<pre class="r"><code>rm(new_temps)
-rm(watertemp_pred)</code></pre>
 <p><br></p>
 </div>
 <div id="fish-cr.-at-mouth-1" class="section level1">
@@ -1622,18 +1571,8 @@ reg_plot_15110003</code></pre>
 
 ## Climate Scenario (3.5C air temp warming)
 
-# Create vector of new air temps under 3.5C warming scenario
-new_temps &lt;- data.frame(air_mean = airwater_join$air_mean + 3.5)
-
-# Use lm to predict new water temps using updated air temps
-watertemp_pred &lt;- predict(fit, newdata = new_temps)
-
-# Estimate number of days water temp above 20C given future climate scenario 
-daysover20_future &lt;- data_frame(daysover20 = sum(watertemp_pred &gt; 20))
-print(paste(&quot;Predicted # days above 20C (+3.5C future climate):&quot;, {daysover20_future$daysover20}))</code></pre>
+future_climate_predict()</code></pre>
 <pre><code>## [1] &quot;Predicted # days above 20C (+3.5C future climate): 0&quot;</code></pre>
-<pre class="r"><code>rm(new_temps)
-rm(watertemp_pred)</code></pre>
 </div>
 
 
