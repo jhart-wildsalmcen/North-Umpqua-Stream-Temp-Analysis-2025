@@ -1,25 +1,19 @@
 ---
 title: "N. Umpqua Temperature Analysis"
-subtitle: "Summer-run Steelhead Ecology and Conservation in the North Umpqua Basin: Genetic Insights and Management Opportunities, (Pepping et al., 2026)"
 author: "J.Hart"
 date: "2025-08-23"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
+subtitle: "Summer-run Steelhead Ecology and Conservation in the North Umpqua Basin:
+  Genetic Insights and Management Opportunities, (Pepping et al., 2026)"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
-
-```{r}
-# Load packages
-
-library(tidyverse)
-library(readxl)
-library(janitor)
-library(writexl)
-library(readr)
-```
+### Water Logger IDs:
 
 #### 21679180 - Steamboat Above Big Bend Cr.
 #### 15170014 - Big Bend at mouth
@@ -29,28 +23,40 @@ library(readr)
 #### 21433141 - N. Umpqua above Steamboat Cr.
 #### 15110003 - Fish Cr. at mouth
 
+```{r}
+# Load packages
+
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(writexl)
+library(readr)
+#library(tinytex)
+```
+
 ```{r Read in 2024 WSC temp data}
 # Read in 2024 temp logger data summaries
 
 daily_water_master <- read_xlsx("2024 Logger Sites/Water/daily_water_master.xlsx")
 daily_air_master <- read_xlsx("2024 Logger Sites/Air/daily_air_master.xlsx")
 ```
+<br>
 
 # Steamboat Above Big Bend Cr.
 ```{r Steamboat_AboveBigBend - Stats}
-# Logger ID: 21679180
+# Logger ID: 21679180 (WSC logger data)
 
-# Read in data and filter for summer season
+# Read in 2024 WSC data and filter for summer season
 Steam_AboveBigBend <- daily_water_master %>% 
   filter(logger_id == 21679180 & longdate > '2024-06-19' & longdate <= '2024-09-15')
 
 # 2024 max temp
 Steam_AboveBigBend_MaxT <- max(Steam_AboveBigBend$max_temp)
-print(Steam_AboveBigBend_MaxT)
+print(paste("Max Temp C:", Steam_AboveBigBend_MaxT))
  
 # 2024 number of days above 20C
 Steam_AboveBigBend_DaysOver20 <- sum(Steam_AboveBigBend$max_temp > 20)
-print(Steam_AboveBigBend_DaysOver20)
+print(paste("# days above 20C (2024):", Steam_AboveBigBend_DaysOver20))
 
 ```
 
@@ -80,7 +86,7 @@ plot_21679180 <- ggplot() +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by= 2)) +
   theme_bw() +
   labs(title= "Steamboat above Big Bend Cr.",
-       y="Temperature (°C)", 
+       y="Temperature (\u00B0C)", 
        x="") +
   theme(plot.subtitle = element_text(size = 10),
         plot.title = element_text(size= 14, face="bold"),
@@ -97,12 +103,12 @@ plot_21679180
 
 ```
 
-```{r Steamboat_AboveBigBend - Regression Plot}
+```{r Steamboat_AboveBigBend - Regression Plot & Future Climate Scenario}
 ## Air/Water Regression Plot
 
 # Prepare air logger data for regression
 air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat Air
+  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
   mutate(longdate = make_date(year,month,day)) %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(air_mean = mean_temp)  
@@ -129,11 +135,12 @@ lm_eqn <- function(df){
 }                 
 
 # Calculate Pearson correlation coefficient
-correlation <- cor(water$max_temp, air$mean_temp, method = 'pearson')
-print(correlation)
+correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
+print(paste("Pearson R:",correlation))
+
 
 # Linear model fit summary
-fit <- lm(airwater_join$water_max ~ airwater_join$air_mean)
+fit <- lm(water_max ~ air_mean, data = airwater_join)
 summary(fit)
 
 # Create regression plot
@@ -143,24 +150,44 @@ reg_plot_21679180 <- ggplot(airwater_join, aes(x= air_mean, y = water_max)) +
   theme_light() + 
   labs(title="Steamboat above Big Bend Cr. (Air - N. Umpqua at Steamboat)",
        subtitle = "Max Water Temp ~ Mean Air Temp",
-       x="Daily Mean Air temperature (°C)",
-       y="Daily Max Water temperature (°C)") + 
+       x="Daily Mean Air temperature (\u00B0C)",
+       y="Daily Max Water temperature (\u00B0C)") + 
   geom_text(x = 16, y = 24, label = lm_eqn(airwater_join), parse = TRUE)  + 
   geom_text(x = 16, y = 23, label = paste("Pearson R:", round(correlation,3))) +
   theme(plot.title = element_text(size= 12, face="bold"),
         plot.subtitle = element_text(size = 11),
-        axis.text=element_text(size= 11),
-        axis.title=element_text(size= 14)) 
+        axis.text=element_text(size= 8),
+        axis.title=element_text(size= 10)) 
 
 reg_plot_21679180
 
 # Export plot to file
 # ggsave(reg_plot_21679180, file="Figure Plots/Regression Plots/regression_plot_SteamboatAboveBigBend.png", height = 4, width = 6)
-```
 
+
+#---------------------------------------------------------------------------------------------------
+
+## Climate Scenario (3.5C air temp warming)
+
+# Create vector of new air temps under 3.5C warming scenario
+new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
+
+# Use lm to predict new water temps using updated air temps
+watertemp_pred <- predict(fit, newdata = new_temps)
+
+# Estimate number of days water temp above 20C given future climate scenario 
+daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
+print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
+
+rm(new_temps)
+rm(watertemp_pred)
+```
+<br>
 
 # Big Bend Cr. at mouth
-```{r Big Bend stats}
+```{r Big Bend - Stats}
+# Logger ID: 15170014 (USGS hydro station data)
+
 # Read in Big Bend data, clean, and summarize daily mean, min, max temp statistics
 
 list_of_files <- list.files(path = "USB Files/Big Bend",
@@ -192,6 +219,8 @@ BigBend_maxt_2024 <- BigBend %>%
   group_by(logger_id) %>% 
   summarise(maxt = max(max_temp))
 
+print(paste("Max Temp C (2024):", BigBend_maxt_2024$maxt))
+
 # Days >20C (2024)
 BigBend_Days20_2024 <- BigBend %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
@@ -199,12 +228,16 @@ BigBend_Days20_2024 <- BigBend %>%
   group_by(logger_id) %>% 
   summarise(days_over20 = n())
 
+print(paste("# Days above 20C (2024):", BigBend_Days20_2024$days_over20))
+
 # Max temp (10-yr Avg.)
 BigBend_maxt_10yrAvg <- BigBend %>% 
   filter(month_day > '06-19' & month_day <= '09-15') %>% 
   group_by(logger_id,year) %>% 
   summarise(maxt = max(max_temp)) %>% 
   summarise(maxt_avg = mean(maxt))
+
+print(paste("Max Temp C (10-yr Avg.):", BigBend_maxt_10yrAvg$maxt_avg))
 
 # Days >20C (10-yr Avg.)
 BigBend_Days20_10yrAvg <- BigBend %>% 
@@ -214,13 +247,17 @@ BigBend_Days20_10yrAvg <- BigBend %>%
   summarise(days_over20 = n()) %>% 
   summarise(days_over20_avg = sum(days_over20) / 10)
 
+print(paste("# Days above 20C (10-yr Avg.):", BigBend_Days20_10yrAvg$days_over20_avg))
+
 # Max Temp (Drought)  
   BigBend_maxt_drought <- BigBend %>% 
   filter(year == '2021' | year == '2022') %>% 
   filter(month_day > '06-19' & month_day <= '09-15') %>% 
   group_by(logger_id) %>% 
   summarise(maxt = max(max_temp))
-  
+
+print(paste("Max Temp C (Drought yrs):",  BigBend_maxt_drought$maxt))
+
 # Days >20C (Drought)
   BigBend_Days20_drought <- BigBend %>% 
   filter(year == '2021' | year == '2022') %>% 
@@ -230,9 +267,10 @@ BigBend_Days20_10yrAvg <- BigBend %>%
   summarise(days_over20 = n()) %>% 
   summarise(days_over20_avg = sum(days_over20) / 2)
   
+print(paste("# Days above 20C (Drought yrs):",  BigBend_Days20_drought$days_over20_avg))
 ```
 
-```{r Big Bend Temp Plots}
+```{r Big Bend - Temp Plots}
 ## Mean, Min, Max Temp Plot 
 
 # Data frame for plot
@@ -258,7 +296,7 @@ plot_15170014 <- ggplot() +
   scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by= 2)) +
   theme_bw() +
-  labs(title= "Big Bend Cr. at mouth", y="Temperature (°C)", x="") +
+  labs(title= "Big Bend Cr. at mouth", y="Temperature (\u00B0C)", x="") +
   theme(plot.subtitle = element_text(size = 10),
         plot.title = element_text(size= 14, face="bold"),
         axis.text=element_text(size= 12),
@@ -272,7 +310,8 @@ plot_15170014
 # Export plot to file 
 # ggsave(plot_15170014, file="Figure Plots/Temp Plots/Temp Plot_BigBend.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
 
-----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
+
 ## Number of days above 20C plot
   
 temp <- BigBend %>% 
@@ -302,12 +341,12 @@ BigBend_Days20_Plot
 # ggsave(BigBend_Days20_Plot, file="Figure Plots/Temp Plots/DaysOver20C_BigBend.png", height = 4, width = 6) 
 ```
 
-```{r Big Bend Regression Plot}
+```{r Big Bend - Regression Plot & Future Climate Scenario}
 ## Air/Water Regression Plot
 
 # Prepare air logger data for regression
 air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat Air
+  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
   mutate(longdate = make_date(year,month,day)) %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(air_mean = mean_temp)  
@@ -332,11 +371,11 @@ lm_eqn <- function(df){
 }                 
 
 # Calculate Pearson correlation coefficient
-correlation <- cor(water$max_temp, air$mean_temp, method = 'pearson')
-print(correlation)
+correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
+print(paste("Pearson R:",correlation))
 
 # Linear model fit summary
-fit <- lm(airwater_join$water_max ~ airwater_join$air_mean)
+fit <- lm(water_max ~ air_mean, data = airwater_join)
 summary(fit)
 
 # Create regression plot
@@ -346,43 +385,61 @@ reg_plot_15170014 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
   theme_light() + 
   labs(title="Big Bend Cr. at mouth (Air - N. Umpqua at Steamboat)",
        subtitle = "Max Water Temp ~ Mean Air Temp",
-       x="Daily Mean Air temperature (°C)",
-       y="Daily Max Water temperature (°C)") + 
+       x="Daily Mean Air temperature (\u00B0C)",
+       y="Daily Max Water temperature (\u00B0C)") + 
   geom_text(x = 16, y = 19, label = lm_eqn(airwater_join), parse = TRUE)  + 
   geom_text(x = 16, y = 18, label = paste("Pearson R:", round(correlation,3))) +
   theme(plot.title = element_text(size=12, face="bold"),
         plot.subtitle = element_text(size = 11),
-        axis.text=element_text(size=11),
-         axis.title=element_text(size=14)) 
+        axis.text=element_text(size=8),
+         axis.title=element_text(size=10)) 
 
 reg_plot_15170014
 
 # Export plot to file
 # ggsave(reg_plot_15170014, file="Figure Plots/Regression Plots/regression_plot_BigBend.png", height = 4, width = 6)
-```
 
+#---------------------------------------------------------------------------------------------------
+
+## Climate Scenario (3.5C air temp warming)
+
+# Create vector of new air temps under 3.5C warming scenario
+new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
+
+# Use lm to predict new water temps using updated air temps
+watertemp_pred <- predict(fit, newdata = new_temps)
+
+# Estimate number of days water temp above 20C given future climate scenario 
+daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
+print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
+
+rm(new_temps)
+rm(watertemp_pred)
+```
+<br>
 
 # Steamboat Below Big Bend Cr.
-```{r S_BelowBigBend}
+```{r Steamboat_BelowBigBend - Stats}
+# Logger ID: 21679175 (WSC logger data)
 
-# Read in data and filter for summer season
-S_BelowBigBend <- daily_water_master %>% 
+# Read in 2024 WSC data and filter for summer season
+Steam_BelowBigBend <- daily_water_master %>% 
   filter(logger_id == 21679175 & longdate > '2024-06-19' & longdate <= '2024-09-15')
 
 # 2024 Max Temp
-S_BelowBigBend_maxt <- S_BelowBigBend %>% 
-  summarize(maxt = max(max_temp))
+Steam_BelowBigBend_maxt <- max(Steam_BelowBigBend$max_temp)
+print(paste("Max Temp C (2024):",Steam_BelowBigBend_maxt))
 
 # 2024 # Days above 20C
-S_BelowBigBend_Days20 <- S_BelowBigBend %>% 
-  filter(max_temp > 20) %>% 
-  summarize(days20 = n())
+Steam_BelowBigBend_Days20 <- sum(Steam_BelowBigBend$max_temp > 20)
+print(paste("# Days above 20C:",Steam_BelowBigBend_Days20))
+```
 
--------------------------------------------------------------------------------
+```{r Steamboat_BelowBigBend - Temp Plots}
 ### Mean, Min, Max Temp Plot 
 
 # Plot data frame
-temp <- S_BelowBigBend
+temp <- Steam_BelowBigBend
 
 x=as.Date(temp$longdate)
 y_lower = 20
@@ -390,37 +447,40 @@ y_upper = Inf
 
 # Create temp plot
 plot_21679175 <- ggplot() +
-  geom_hline(yintercept = 20, linetype = "dotted", size=1) +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
   geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
-  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth =1) +
-  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth =0.5) +
-  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth =0.5) +
-  
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 0.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 0.5) +
   scale_colour_manual("", 
                       breaks = c("mean_temp", "min_temp", "max_temp"),
                       values = c("black", "blue", "red"),
                       labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
   scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
-  scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by=2)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by= 2)) +
   theme_bw() +
-  theme(legend.position = "none") +
-  labs(title= "Steamboat below Big Bend Cr.", y="Temperature (°C)", x="") +
+  labs(title= "Steamboat below Big Bend Cr.", y="Temperature (\u00B0C)", x="") +
   theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold")) +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14))
+        plot.title = element_text(size=14, face="bold"),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=14),
+        legend.position = "bottom") 
+ 
+
+rm(temp)
 
 plot_21679175
 
 # Export plot to file 
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/plot_21679175.png", height = 3, width = 6)
+ggsave(plot_21679175, file="Figure Plots/Temp Plots/Temp Plot_SteamboatBelowBigBend.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
+```
 
---------------------------------------------------------------------------------------
+```{r Steamboat_BelowBigBend - Resgression Plots & Future Climate Scenario}
 ## Air/Water Regression Plot
 
 # Prepare air logger data for regression
 air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat Air
+  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
   mutate(longdate = make_date(year,month,day)) %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(air_mean = mean_temp)  
@@ -448,51 +508,67 @@ lm_eqn <- function(df){
 }                 
 
 # Calculate Pearson correlation coefficient
-correlation <- cor(water$max_temp, air$mean_temp, method = 'pearson')
-correlation
+correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
+print(paste("Pearson R:",correlation))
 
-fit <- lm(airwater_join$water_max ~ airwater_join$air_mean)
+fit <- lm(water_max ~ air_mean, data = airwater_join)
 summary(fit)
 
 
 # Create regression plot
 
-reg_plot <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
-  geom_point(color='blue') +
+reg_plot_21679175 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
+  geom_point(shape= 21, color='black', fill= 'deepskyblue3', size = 2) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
- labs(title="Steamboat below Big Bend Cr. (Air - N. Umpqua at Steamboat)",
+  labs(title="Steamboat below Big Bend Cr. (Air - N. Umpqua at Steamboat)",
        subtitle = "Max Water Temp ~ Mean Air Temp",
-       x="Daily Mean Air temperature (°C)",
-       y="Daily Max Water temperature (°C)") + 
-geom_text(x = 16, y = 21, label = lm_eqn(airwater_join), parse = TRUE)  + 
-geom_text(x = 16, y = 20, label = paste("Pearson R:", round(correlation,3))) +
+       x="Daily Mean Air temperature (\u00B0C)",
+       y="Daily Max Water temperature (\u00B0C)") + 
+  geom_text(x = 16, y = 21, label = lm_eqn(airwater_join), parse = TRUE)  + 
+  geom_text(x = 16, y = 20, label = paste("Pearson R:", round(correlation,3))) +
   theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11)) +
-  theme(axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
+        plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size=8),
+        axis.title=element_text(size=10))
 
-reg_plot
+reg_plot_21679175
 
 # Export plot to file
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_21679175.png", height = 4, width = 6)
+# ggsave(reg_plot_21679175, file="Figure Plots/Regression Plots/regression_plot_SteamboatBelowBigBend.png", height = 4, width = 6)
+
+#---------------------------------------------------------------------------------------------------
+
+## Climate Scenario (3.5C air temp warming)
+
+# Create vector of new air temps under 3.5C warming scenario
+new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
+
+# Use lm to predict new water temps using updated air temps
+watertemp_pred <- predict(fit, newdata = new_temps)
+
+# Estimate number of days water temp above 20C given future climate scenario 
+daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
+print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
+
+rm(new_temps)
+rm(watertemp_pred)
 
 ```
-
+<br>
 
 # Steamboat Above Canton Cr.
-```{r Steamboat Above Canton}
+```{r Steamboat_AboveCanton - Stats}
+# Logger ID: 15170003 (USGS hydro station data)
 
-# Read in Steamboat Above Canton USB Data
+## Read in Steamboat Above data, clean, and summarize daily mean, min, max temp statistics
+
 list_of_files <- list.files(path = "USB Files/SteamAboveCanton",
                             recursive = TRUE,
                             pattern = "\\.csv$",
                             full.names = TRUE)
 
-SteamboatCant <- readr::read_csv(list_of_files, id = "file_name") 
-
-# Clean and format data for analysis
-SteamboatCant <- SteamboatCant %>% 
+Steamboat_AboveCant <- readr::read_csv(list_of_files, id = "file_name") %>% 
   clean_names() %>% 
   mutate(site = "Steamboat above Canton Cr.") %>% 
   mutate(temp_c = (temp - 32) * (5/9)) %>% #temp in F, need to convert to C
@@ -502,67 +578,77 @@ SteamboatCant <- SteamboatCant %>%
                   into = c('year', 'month', 'day'),
                   sep= '-',
                   remove = FALSE) %>% 
-  mutate(month_day = format(longdate, "%m-%d"))
-  
-  
-# Calculate daily summary stats
-SteamboatCant <- SteamboatCant %>% 
+  mutate(month_day = format(longdate, "%m-%d")) %>% 
   group_by(longdate, month_day, year, logger_id) %>% 
   summarise(mean_temp = round(mean(temp_c), digits=2),
             min_temp = round(min(temp_c), digits=2),
             max_temp = round(max(temp_c), digits=2))
+  
+## Calculate other temperature statistics
 
-# Calculate temperature statistics
-
-# Max T (2024)
-SteamboatCant_maxt_2024 <- SteamboatCant %>% 
+# Max Temp (2024)
+SteamboatCant_maxt_2024 <- Steamboat_AboveCant %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   group_by(logger_id) %>% 
   summarise(maxt = max(max_temp))
 
+print(paste("Max Temp C (2024):", SteamboatCant_maxt_2024$maxt))
+
 # Days >20C (2024)
-SteamboatCant_Days20_2024 <- SteamboatCant %>% 
+SteamboatCant_Days20_2024 <- Steamboat_AboveCant %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   filter(max_temp > 20) %>% 
   group_by(logger_id) %>% 
   summarise(days_over20 = n())
 
-# Max T (10-yr Avg.)
-SteamboatCant_maxt_10yrAvg <- SteamboatCant %>% 
+print(paste("# Days above 20C (2024):", SteamboatCant_Days20_2024$days_over20))
+
+# Max Temp (10-yr Avg.)
+SteamboatCant_maxt_10yrAvg <- Steamboat_AboveCant %>% 
   filter(month_day > '06-19' & month_day <= '09-15') %>% 
   group_by(logger_id,year) %>% 
   summarise(maxt = max(max_temp)) %>% 
   summarise(maxt_avg = mean(maxt))
 
+print(paste("Max Temp C (10-yr Avg.):", SteamboatCant_maxt_10yrAvg$maxt_avg))
+
 # Days >20C (10-yr Avg.)
-SteamboatCant_Days20_10yrAvg <- SteamboatCant %>% 
+SteamboatCant_Days20_10yrAvg <- Steamboat_AboveCant %>% 
   filter(month_day > '06-19' & month_day <= '09-15') %>% 
   filter(max_temp > 20) %>% 
   group_by(logger_id,year) %>%
   summarise(days_over20 = n()) %>% 
   summarise(days_over20_avg = sum(days_over20) / 10)
 
-# Max T (Drought)  
-  SteamboatCant_maxt_drought <- SteamboatCant %>% 
+print(paste("# Days above 20C (10-yr Avg.):", SteamboatCant_Days20_10yrAvg$days_over20_avg))
+
+# Max Temp (Drought)  
+  SteamboatCant_maxt_drought <- Steamboat_AboveCant %>% 
   filter(year == '2021' | year == '2022') %>% 
   filter(month_day > '06-19' & month_day <= '09-15') %>% 
   group_by(logger_id) %>% 
   summarise(maxt = max(max_temp))
   
+print(paste("Max Temp C (Drought yrs):", SteamboatCant_maxt_drought$maxt))
+  
 # Days >20C (Drought)
- SteamboatCant_Days20_drought <- SteamboatCant %>% 
+ SteamboatCant_Days20_drought <- Steamboat_AboveCant %>% 
   filter(year == '2021' | year == '2022') %>% 
   filter(month_day > '06-19' & month_day <= '09-15') %>% 
   filter(max_temp > 20) %>% 
   group_by(logger_id,year) %>% 
   summarise(days_over20 = n()) %>% 
   summarise(days_over20_avg = sum(days_over20) / 2)
+
+print(paste("# Days above 20C (Drought yrs):", SteamboatCant_Days20_drought$days_over20_avg))
  
--------------------------------------------------------------------------------
-### Mean, Min, Max Temp Plot 
+```
+
+```{r Steamboat_AboveCanton - Temp Plots}
+## Mean, Min, Max Temp Plot 
 
 # Data frame for plot
-temp <- SteamboatCant %>% 
+temp <- Steamboat_AboveCant %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15')
 
 x=as.Date(temp$longdate)
@@ -571,7 +657,7 @@ y_upper = Inf
 
 # Create temp plot
 plot_15170003 <- ggplot() +
-  geom_hline(yintercept = 20, linetype = "dotted", size=1) +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
   geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
   geom_line(data=temp, aes(x=longdate,y=mean_temp, color="mean_temp"), linewidth =1) +
   geom_line(data=temp, aes(x=longdate,y=min_temp, color = "min_temp"), linewidth =0.5) +
@@ -584,31 +670,60 @@ plot_15170003 <- ggplot() +
   scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by=2)) +
   theme_bw() +
-  theme(legend.position = "none") +
-  labs(title= "Steamboat above Canton Cr.", y="Temperature (°C)", x="") +
+  labs(title= "Steamboat above Canton Cr.", y="Temperature (\u00B0C)", x="") +
   theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold")) +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14))
-
+        plot.title = element_text(size=14, face="bold"),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=14),
+        legend.position = "bottom")
+       
+rm(temp)
 
 plot_15170003
 
 # Export plot to file 
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/plot_15170003.png", height = 3, width = 6)
+ggsave(plot_15170003, file="Figure Plots/Temp Plots/Temp Plot_SteamboatAboveCant.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
 
---------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+  
+## Number of days above 20C Plot
+  
+temp <- Steamboat_AboveCant %>% 
+  filter(month_day > '06-19' & month_day <= '09-15') %>% 
+  group_by(year) %>%
+  summarize(conditional_count = sum(max_temp > 20))
+
+SteamboatCant_Days20_Plot <- ggplot(data=temp) +
+  geom_col(aes(x=as.factor(year),y=conditional_count), fill="brown3", color="black",alpha=0.5) +
+  geom_path(aes(x=as.factor(year),y=conditional_count, group = 1), size=1.25) +
+  geom_point(aes(x=as.factor(year),y=conditional_count), size =4) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,75), breaks = seq(0,70,by=10)) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(title= "Steamboat above Canton Cr.", y="# of Days", x="Year") +
+  theme(plot.subtitle = element_text(size = 10),
+        plot.title = element_text(size=18, face="bold")) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14))
+
+SteamboatCant_Days20_Plot
+
+# Export plot to file 
+ggsave(SteamboatCant_Days20_Plot, file="Figure Plots/Temp Plots/DaysOver20C_SteamboatAboveCant.png", height = 5, width = 8)
+```
+
+```{r Steamboat_AboveCanton - Regression Plots & Future Climate Scenario}
 ## Air/Water Regression Plot
 
 # Prepare air logger data for regression
 air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat Air
+  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
   mutate(longdate = make_date(year,month,day)) %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(air_mean = mean_temp)  
 
 # Prepare individual water logger data for regression
-water <- SteamboatCant  %>% 
+water <- Steamboat_AboveCant  %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(water_max = max_temp)
 
@@ -628,77 +743,73 @@ lm_eqn <- function(df){
 }                 
 
 # Calculate Pearson correlation coefficient
-correlation <- cor(water$max_temp, air$mean_temp, method = 'pearson')
-correlation
+correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
+print(paste("Pearson R:",correlation))
 
-fit <- lm(airwater_join$water_max ~ airwater_join$air_mean)
+fit <- lm(water_max ~ air_mean, data = airwater_join)
 summary(fit)
 
   
 # Create regression plot
-reg_plot <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
-  geom_point(color='blue') +
+reg_plot_15170003 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
+  geom_point(shape= 21, color='black', fill= 'deepskyblue3', size = 2) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
  labs(title="Steamboat above Canton Cr. (Air - N. Umpqua at Steamboat)",
        subtitle = "Max Water Temp ~ Mean Air Temp",
-       x="Daily Mean Air temperature (°C)",
-       y="Daily Max Water temperature (°C)") + 
-geom_text(x = 16, y = 24, label = lm_eqn(airwater_join), parse = TRUE)  + 
-geom_text(x = 16, y = 23, label = paste("Pearson R:", round(correlation,3))) +
+       x="Daily Mean Air temperature (\u00B0C)",
+       y="Daily Max Water temperature (\u00B0C)") + 
+  geom_text(x = 16, y = 24, label = lm_eqn(airwater_join), parse = TRUE)  + 
+  geom_text(x = 16, y = 23, label = paste("Pearson R:", round(correlation,3))) +
   theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11)) +
-  theme(axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
+        plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=14)) 
 
-reg_plot
+reg_plot_15170003
 
 # Export plot to file
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_15170003.png", height = 4, width = 6)
+# ggsave(reg_plot_15170003, file="Figure Plots/Regression Plots/regression_plot_SteamboatAboveCanton.png", height = 4, width = 6)
 
--------------------------------------------------------------------------------------------------------------------------------------------------
-  
-## Number of days above 20C Plot
-  
-temp <- SteamboatCant %>% 
-  filter(month_day > '06-19' & month_day <= '09-15') %>% 
-  group_by(year) %>%
-  summarize(conditional_count = sum(max_temp > 20))
+#---------------------------------------------------------------------------------------------------
 
-SteamboatCant_Days20_Plot <- ggplot(data=temp) +
-  geom_col(aes(x=as.factor(year),y=conditional_count), fill="brown3", color="black",alpha=0.5) +
-  geom_path(aes(x=as.factor(year),y=conditional_count, group = 1), size=1.25) +
-  geom_point(aes(x=as.factor(year),y=conditional_count), size =4) +
-  scale_y_continuous(expand = c(0,0), limits = c(0,75), breaks = seq(0,70,by=10)) +
-  theme_bw() +
-  theme(legend.position = "none") +
-  labs(title= "Steamboat above Canton Cr.", y="# of Days", x="Year") +
-  theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=18, face="bold")) +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14))
+## Climate Scenario (3.5C air temp warming)
 
-SteamboatCant_Days20_Plot
+# Create vector of new air temps under 3.5C warming scenario
+new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
+
+# Use lm to predict new water temps using updated air temps
+watertemp_pred <- predict(fit, newdata = new_temps)
+
+# Estimate number of days water temp above 20C given future climate scenario 
+daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
+print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
+
+rm(new_temps)
+rm(watertemp_pred)
+
 ```
-
+<br>
 
 # Upper Canton Cr.
-```{r UpperCanton}
+```{r UpperCanton - Stats}
+# Logger ID: 21679177 (WSC logger data)
 
-# Read in data and filter for summer season
+# Read in 2024 WSC data and filter for summer season
 UpperCanton <- daily_water_master %>% 
   filter(logger_id == 21679177 & longdate > '2024-06-19' & longdate <= '2024-09-15')
 
 # 2024 Max Temp
-UpperCanton_maxt <- UpperCanton %>% 
-  summarize(maxt = max(max_temp))
+UpperCanton_maxt <- max(UpperCanton$max_temp) 
+print(paste("Max Temp C (2024):", UpperCanton_maxt))
 
 # 2024 # Days above 20C
-UpperCanton_Days20 <- UpperCanton %>% 
-  filter(max_temp > 20) %>% 
-  summarize(days20 = n())
+UpperCanton_Days20 <- sum(UpperCanton$max_temp > 20)
+print(paste("# Days above 20C (2024):", UpperCanton_Days20))
 
--------------------------------------------------------------------------------
+```
+
+```{r UpperCanton - Temp Plots}
 ### Mean, Min, Max Temp Plot 
 
 # Plot data frame
@@ -710,38 +821,40 @@ y_upper = Inf
 
 # Create temp plot
 plot_21679177 <- ggplot() +
-  geom_hline(yintercept = 20, linetype = "dotted", size=1) +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
   geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
-  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth =1) +
-  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth =0.5) +
-  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth =0.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 0.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 0.5) +
   
   scale_colour_manual("", 
                       breaks = c("mean_temp", "min_temp", "max_temp"),
                       values = c("black", "blue", "red"),
                       labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
   scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
-  scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by=2)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by= 2)) +
   theme_bw() +
-  theme(legend.position = "none") +
-  labs(title= "Upper Canton Cr.", y="Temperature (°C)", x="") +
+  labs(title= "Upper Canton Cr.", y="Temperature (\u00B0C)", x="") +
   theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold")) +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14))
-
+        plot.title = element_text(size=14, face="bold"),
+        axis.text=element_text(size=12), 
+        xis.title=element_text(size=14),
+        legend.position = "bottom")
+  
+rm(temp)
 
 plot_21679177
 
 # Export plot to file 
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/plot_21679177.png", height = 3, width = 6)
+# ggsave(plot_21679177, file="Figure Plots/Temp Plots/Temp Plot_UpperCanton.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
+```
 
---------------------------------------------------------------------------------------
+```{r UpperCanton - Regression Plots & Future Climate Scenario}
 ## Air/Water Regression Plot
 
 # Prepare air logger data for regression
 air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat Air
+  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
   mutate(longdate = make_date(year,month,day)) %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(air_mean = mean_temp)  
@@ -769,55 +882,74 @@ lm_eqn <- function(df){
 }                 
 
 # Calculate Pearson correlation coefficient
-correlation <- cor(water$max_temp, air$mean_temp, method = 'pearson')
-correlation
+correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
+print(paste("Pearson R:",correlation))
 
-fit <- lm(airwater_join$water_max ~ airwater_join$air_mean)
+# Summary of linear model fit
+fit <- lm(water_max ~ air_mean, data = airwater_join)
 summary(fit)
 
 
 # Create regression plot
-reg_plot <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
-  geom_point(color='blue') +
+reg_plot_21679177 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
+  geom_point(shape= 21, color='black', fill= 'deepskyblue3', size = 2) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
- labs(title="Upper Canton Cr. (Air - N. Umpqua at Steamboat)",
+  labs(title="Upper Canton Cr. (Air - N. Umpqua at Steamboat)",
        subtitle = "Max Water Temp ~ Mean Air Temp",
-       x="Daily Mean Air temperature (°C)",
-       y="Daily Max Water temperature (°C)") + 
-geom_text(x = 16, y = 21, label = lm_eqn(airwater_join), parse = TRUE)  + 
-geom_text(x = 16, y = 20, label = paste("Pearson R:", round(correlation,3))) +
+       x="Daily Mean Air temperature (\u00B0C)",
+       y="Daily Max Water temperature (\u00B0C)") + 
+  geom_text(x = 16, y = 21, label = lm_eqn(airwater_join), parse = TRUE)  + 
+  geom_text(x = 16, y = 20.25, label = paste("Pearson R:", round(correlation,3))) +
   theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11)) +
-  theme(axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
+        plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size=8),
+        axis.title=element_text(size=10))
+ 
 
-reg_plot
+reg_plot_21679177
 
 # Export plot to file
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_21679177.png", height = 4, width = 6)
+# ggsave(reg_plot_21679177, file="Figure Plots/Regression Plots/regression_plot_UpperCanton.png", height = 4, width = 6)
 
+#---------------------------------------------------------------------------------------------------
+
+## Climate Scenario (3.5C air temp warming)
+
+# Create vector of new air temps under 3.5C warming scenario
+new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
+
+# Use lm to predict new water temps using updated air temps
+watertemp_pred <- predict(fit, newdata = new_temps)
+
+# Estimate number of days water temp above 20C given future climate scenario 
+daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
+print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
+
+rm(new_temps)
+rm(watertemp_pred)
 ```
-
+<br>
 
 # N. Umpqua above Steamboat
-```{r NUmpqua_AboveSteam}
+```{r NUmpqua_AboveSteam - Stats}
+# Logger ID: 21433141 (WSC logger data)
 
-# Read in data and filter for summer season
+# Read in 2024 WSC data and filter for summer season
 NUmpqua_AboveSteam <- daily_water_master %>% 
   filter(logger_id == 21433141 & longdate > '2024-06-19' & longdate <= '2024-09-15')
 
 # 2024 Max Temp
-NUmpqua_AboveSteam_maxt <- NUmpqua_AboveSteam %>% 
-  summarize(maxt = max(max_temp))
+NUmpqua_AboveSteam_maxt <- max(NUmpqua_AboveSteam$max_temp) 
+print(paste("Max Temp C (2024):", NUmpqua_AboveSteam_maxt))
 
 # 2024 # Days above 20C
-NUmpqua_AboveSteam_Days20 <- NUmpqua_AboveSteam %>% 
-  filter(max_temp > 20) %>% 
-  summarize(days20 = n())
+NUmpqua_AboveSteam_Days20 <- sum(NUmpqua_AboveSteam$max_temp > 20)
+print(paste("# Days above 20C:", NUmpqua_AboveSteam_Days20))
+```
 
--------------------------------------------------------------------------------
-### Mean, Min, Max Temp Plot 
+```{r NUmpqua_AboveSteam - Temp Plots}
+## Mean, Min, Max Temp Plot 
 
 # Plot data frame
 temp <- NUmpqua_AboveSteam
@@ -828,11 +960,11 @@ y_upper = Inf
 
 # Create temp plot
 plot_21433141 <- ggplot() +
-  geom_hline(yintercept = 20, linetype = "dotted", size=1) +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
   geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
-  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth =1) +
-  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth =0.5) +
-  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth =0.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 0.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 0.5) +
   
   scale_colour_manual("", 
                       breaks = c("mean_temp", "min_temp", "max_temp"),
@@ -841,25 +973,27 @@ plot_21433141 <- ggplot() +
   scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by=2)) +
   theme_bw() +
-  theme(legend.position = "none") +
-  labs(title= "N. Umpqua above Steamboat Cr.", y="Temperature (°C)", x="") +
+  labs(title= "N. Umpqua above Steamboat Cr.", y="Temperature (\u00B0C)", x="") +
   theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold")) +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14))
+        plot.title = element_text(size=14, face="bold"),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=14),
+        legend.position = "bottom") 
 
+rm(temp)
 
 plot_21433141
 
 # Export plot to file 
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/plot_21433141.png", height = 3, width = 6)
+# ggsave(plot_21433141, file="Figure Plots/Temp Plots/Temp Plot_NUmpqua_AboveSteam.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
+```
 
---------------------------------------------------------------------------------------
+```{r NUmpqua_AboveSteam - Regression Plots & Future Climate Scenario}
 ## Air/Water Regression Plot
 
 # Prepare air logger data for regression
 air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat Air
+  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
   mutate(longdate = make_date(year,month,day)) %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(air_mean = mean_temp)  
@@ -887,49 +1021,66 @@ lm_eqn <- function(df){
 }                 
 
 # Calculate Pearson correlation coefficient
-correlation <- cor(water$max_temp, air$mean_temp, method = 'pearson')
-correlation
+correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
+print(paste("Pearson R:",correlation))
 
-fit <- lm(airwater_join$water_max ~ airwater_join$air_mean)
+# Summary linear model fit
+fit <- lm(water_max ~ air_mean, data = airwater_join)
 summary(fit)
 
 
 # Create regression plot
-reg_plot <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
-  geom_point(color='blue') +
+reg_plot_21433141 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
+  geom_point(shape= 21, color='black', fill= 'deepskyblue3', size = 2) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
- labs(title="North Umpqua above Steamboat Cr. (Air - N. Umpqua at Steamboat)",
+  labs(title="North Umpqua above Steamboat Cr. (Air - N. Umpqua at Steamboat)",
        subtitle = "Max Water Temp ~ Mean Air Temp",
-       x="Daily Mean Air temperature (°C)",
-       y="Daily Max Water temperature (°C)") + 
-geom_text(x = 16, y = 19, label = lm_eqn(airwater_join), parse = TRUE)  + 
-geom_text(x = 16, y = 18, label = paste("Pearson R:", round(correlation,3))) +
+       x="Daily Mean Air temperature (\u00B0C)",
+       y="Daily Max Water temperature (\u00B0C)") + 
+  geom_text(x = 16, y = 19, label = lm_eqn(airwater_join), parse = TRUE)  + 
+  geom_text(x = 16, y = 18.5, label = paste("Pearson R:", round(correlation,3))) +
   theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11)) +
-  theme(axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
+        plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size=8),
+        axis.title=element_text(size=10))
 
-reg_plot
+reg_plot_21433141
 
 #Export plot to file
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_21433141.png", height = 4, width = 6)
-```
+#ggsave(reg_plot_21433141, file="Figure Plots/Regression Plots/regression_plot_NUmpqua_AboveSteam.png", height = 4, width = 6)
 
+#---------------------------------------------------------------------------------------------------
+
+## Climate Scenario (3.5C air temp warming)
+
+# Create vector of new air temps under 3.5C warming scenario
+new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
+
+# Use lm to predict new water temps using updated air temps
+watertemp_pred <- predict(fit, newdata = new_temps)
+
+# Estimate number of days water temp above 20C given future climate scenario 
+daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
+print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
+
+rm(new_temps)
+rm(watertemp_pred)
+```
+<br>
 
 # Fish Cr. at mouth
-```{r Fish Cr}
-# Read in Fish Cr. USB Data
+```{r Fish Cr - Stats}
+# Logger ID: 15110003 (USGS hydro station data)
+
+## Read in Big Bend data, clean, and summarize daily mean, min, max temp statistics
 
 list_of_files <- list.files(path = "USB Files/Fish",
                             recursive = TRUE,
                             pattern = "\\.csv$",
                             full.names = TRUE)
 
-FishCr <- readr::read_csv(list_of_files, id = "file_name") 
-
-# Clean and format data for analysis
-FishCr<- FishCr %>% 
+FishCr <- readr::read_csv(list_of_files, id = "file_name") %>% 
   clean_names() %>% 
   mutate(site = "Fish Cr. at mouth") %>% 
   mutate(temp_c = (temp - 32) * (5/9)) %>% #temp in F, need to convert to C
@@ -939,23 +1090,21 @@ FishCr<- FishCr %>%
                   into = c('year', 'month', 'day'),
                   sep= '-',
                   remove = FALSE) %>% 
-  mutate(month_day = format(longdate, "%m-%d"))
-  
-  
-# Calculate daily summary stats
-FishCr <- FishCr %>% 
+  mutate(month_day = format(longdate, "%m-%d")) %>% 
   group_by(longdate,month_day,year,logger_id) %>% 
   summarise(mean_temp = round(mean(temp_c), digits=2),
             min_temp = round(min(temp_c), digits=2),
             max_temp = round(max(temp_c), digits=2))
 
-# Calculate temperature statistics
+## Calculate other temperature statistics
 
-# Max T (2024)
+# Max Temp (2024)
 FishCr_maxt_2024 <-FishCr %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   group_by(logger_id) %>% 
   summarise(maxt = max(max_temp))
+
+print(paste("Max Temp C (2024):",FishCr_maxt_2024$maxt))
 
 # Days >20C (2024)
 FishCr_Days20_2024 <- FishCr %>% 
@@ -964,12 +1113,16 @@ FishCr_Days20_2024 <- FishCr %>%
   group_by(logger_id) %>% 
   summarise(days_over20 = n())
 
-# Max T (10-yr Avg.)
+print(paste("# Days above 20C (2024):", FishCr_Days20_2024$days_over20))
+
+# Max Temp (10-yr Avg.)
 FishCr_maxt_10yrAvg <- FishCr %>% 
   filter(month_day > '06-19' & month_day <= '09-15') %>% 
   group_by(logger_id,year) %>% 
   summarise(maxt = max(max_temp)) %>% 
   summarise(maxt_avg = mean(maxt))
+
+print(paste("Max Temp C (10-yr Avg.):", FishCr_maxt_10yrAvg$maxt_avg))
 
 # Days >20C (10-yr Avg.)
 FishCr_Days20_10yrAvg <- FishCr %>% 
@@ -979,12 +1132,16 @@ FishCr_Days20_10yrAvg <- FishCr %>%
   summarise(days_over20 = n()) %>% 
   summarise(days_over20_avg = sum(days_over20) / 10)
 
-# Max T (Drought)  
+print(paste("# Days above 20C (10-yr Avg.):", FishCr_Days20_10yrAvg$days_over20_avg))
+
+# Max Temp (Drought)  
   FishCr_maxt_drought <- FishCr %>% 
   filter(year == '2021' | year == '2022') %>% 
   filter(month_day > '06-19' & month_day <= '09-15') %>% 
   group_by(logger_id) %>% 
   summarise(maxt = max(max_temp))
+  
+  print(paste("Max Temp C (Drought yrs):",  FishCr_maxt_drought$maxt))
   
 # Days >20C (Drought)
  FishCr_Days20_drought <- FishCr %>% 
@@ -995,8 +1152,12 @@ FishCr_Days20_10yrAvg <- FishCr %>%
   summarise(days_over20 = n()) %>% 
   summarise(days_over20_avg = sum(days_over20) / 2)
  
--------------------------------------------------------------------------------
-### Mean, Min, Max Temp Plot 
+ print(paste("# Days above 20C (Drought yrs):",  FishCr_Days20_drought$days_over20_avg))
+ 
+```
+
+```{r Fish Cr - Temp Plots}
+## Mean, Min, Max Temp Plot 
 
 # Data frame for plot
  temp <- FishCr %>% 
@@ -1008,11 +1169,11 @@ y_upper = Inf
 
 # Create temp plot
 plot_15110003 <- ggplot() +
-  geom_hline(yintercept = 20, linetype = "dotted", size=1) +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
   geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
-  geom_line(data=temp, aes(x=longdate,y=mean_temp, color="mean_temp"), linewidth =1) +
-  geom_line(data=temp, aes(x=longdate,y=min_temp, color = "min_temp"), linewidth =0.5) +
-  geom_line(data=temp, aes(x=longdate, y=max_temp, color= "max_temp"), linewidth =0.5) +
+  geom_line(data=temp, aes(x=longdate,y=mean_temp, color="mean_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=longdate,y=min_temp, color = "min_temp"), linewidth = 0.5) +
+  geom_line(data=temp, aes(x=longdate, y=max_temp, color= "max_temp"), linewidth = 0.5) +
   
   scale_colour_manual("", 
                       breaks = c("mean_temp", "min_temp", "max_temp"),
@@ -1021,25 +1182,55 @@ plot_15110003 <- ggplot() +
   scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by=2)) +
   theme_bw() +
-  theme(legend.position = "none") +
-  labs(title= "Fish Cr. at mouth", y="Temperature (°C)", x="") +
+  labs(title= "Fish Cr. at mouth", y="Temperature (\u00B0C)", x="") +
   theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold")) +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14))
+        plot.title = element_text(size=14, face="bold"),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=14),
+        legend.position = "bottom")
+       
 
+rm(temp)
 
 plot_15110003
 
 # Export plot to file 
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/plot_15110003.png", height = 3, width = 6)
+# ggsave(plot_15110003, file="Figure Plots/Temp Plots/Temp Plot_FishCreek.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
 
---------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
+
+## Number of days above 20C Plot
+  
+temp <- FishCr %>% 
+  filter(month_day > '06-19' & month_day <= '09-15') %>% 
+  group_by(year) %>%
+  summarize(conditional_count = sum(max_temp > 20))
+
+FishCr_Days20_Plot <- ggplot(data=temp) +
+  geom_col(aes(x=as.factor(year),y=conditional_count), fill="brown3", color="black",alpha=0.5) +
+  geom_path(aes(x=as.factor(year),y=conditional_count, group = 1), size=1.25) +
+  geom_point(aes(x=as.factor(year),y=conditional_count), size =4) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,11), breaks = seq(0,10,by=2)) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(title= "Fish Cr. at mouth", y="# of Days", x="Year") +
+  theme(plot.subtitle = element_text(size = 10),
+        plot.title = element_text(size=18, face="bold")) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14))
+
+FishCr_Days20_Plot
+#ggsave(FishCr_Days20_Plot, file="Figure Plots/Temp Plots/DaysOver20C_FishCreek.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
+
+
+```
+
+```{r Fish Cr - Regression Plots & Future Climate Scenario}
 ## Air/Water Regression Plot
 
 # Prepare air logger data for regression
 air <- daily_air_master %>% 
-  filter(logger_id == "21433138") %>% # Copeland Cr. at mouth
+  filter(logger_id == "21433138") %>% # Copeland Cr. at mouth air logger
   mutate(longdate = make_date(year,month,day)) %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(air_mean = mean_temp)  
@@ -1065,105 +1256,50 @@ lm_eqn <- function(df){
 }                 
 
 # Calculate Pearson correlation coefficient
-correlation <- cor(water$max_temp, air$mean_temp, method = 'pearson')
-correlation
+correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
+print(paste("Pearson R:",correlation))
 
-fit <- lm(airwater_join$water_max ~ airwater_join$air_mean)
+# Summary linear model fit
+fit <- lm(water_max ~ air_mean, data = airwater_join)
 summary(fit)
 
   
 # Create regression plot
-reg_plot <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
-  geom_point(color='blue') +
+reg_plot_15110003 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
+  geom_point(shape= 21, color='black', fill= 'deepskyblue3', size = 2) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
- labs(title="Fish Cr. at mouth (Air - Copeland Cr. at mouth)",
+  labs(title="Fish Cr. at mouth (Air - Copeland Cr. at mouth)",
        subtitle = "Max Water Temp ~ Mean Air Temp",
-       x="Daily Mean Air temperature (°C)",
-       y="Daily Max Water temperature (°C)") + 
-geom_text(x = 15, y = 17.5, label = lm_eqn(airwater_join), parse = TRUE)  + 
-geom_text(x = 15, y = 17, label = paste("Pearson R:", round(correlation,3))) +
+       x="Daily Mean Air temperature (\u00B0C)",
+       y="Daily Max Water temperature (\u00B0C)") + 
+  geom_text(x = 15, y = 17.5, label = lm_eqn(airwater_join), parse = TRUE)  + 
+  geom_text(x = 15, y = 17, label = paste("Pearson R:", round(correlation,3))) +
   theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11)) +
-  theme(axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
+        plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size=8),
+         axis.title=element_text(size=10))
 
-reg_plot
+reg_plot_15110003
 
 #Export plot to file
-#ggsave(file="2024 Logger Sites/Water/Fig Plots/regression_15110003.png", height = 4, width = 6)
+#ggsave(reg_plot_15110003, file="Figure Plots/Regression Plots/regression_plot_FishCreek.png", height = 4, width = 6)
 
-------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------
 
-## Number of days above 20C Plot
-  
-temp <- FishCr %>% 
-  filter(month_day > '06-19' & month_day <= '09-15') %>% 
-  group_by(year) %>%
-  summarize(conditional_count = sum(max_temp > 20))
+## Climate Scenario (3.5C air temp warming)
 
-FishCr_Days20_Plot <- ggplot(data=temp) +
-  geom_col(aes(x=as.factor(year),y=conditional_count), fill="brown3", color="black",alpha=0.5) +
-  geom_path(aes(x=as.factor(year),y=conditional_count, group = 1), size=1.25) +
-  geom_point(aes(x=as.factor(year),y=conditional_count), size =4) +
-  scale_y_continuous(expand = c(0,0), limits = c(0,11), breaks = seq(0,10,by=2)) +
-  theme_bw() +
-  theme(legend.position = "none") +
-  labs(title= "Fish Cr. at mouth", y="# of Days", x="Year") +
-  theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=18, face="bold")) +
-  theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=14))
+# Create vector of new air temps under 3.5C warming scenario
+new_temps <- data.frame(air_mean = airwater_join$air_mean + 3.5)
 
-FishCr_Days20_Plot
- 
+# Use lm to predict new water temps using updated air temps
+watertemp_pred <- predict(fit, newdata = new_temps)
+
+# Estimate number of days water temp above 20C given future climate scenario 
+daysover20_future <- data_frame(daysover20 = sum(watertemp_pred > 20))
+print(paste("Predicted # days above 20C (+3.5C future climate):", {daysover20_future$daysover20}))
+
+rm(new_temps)
+rm(watertemp_pred)
+
 ```
-
-# 3.5C Warming Climate Scenario Predictions
-```{r}
-# y = 7.98+0.645x	
-S_AboveBigBend_climate <- airwater_join %>%
- mutate(air_pred = air_mean + 3.5) %>% 
- mutate(water_pred = 7.98 + (0.645*air_pred)) %>%
- filter(water_pred > 20) 
-
-# y=6.32+0.605x	
-S_BelowBigBend_climate <- airwater_join %>%
- mutate(air_pred = air_mean + 3.5) %>% 
- mutate(water_pred = 6.32 + (0.605*air_pred)) %>%
- filter(water_pred > 20) 
-
-# y=7.94+0.556x	
-UpperCant_climate <- airwater_join %>%
- mutate(air_pred = air_mean + 3.5) %>% 
- mutate(water_pred = 7.94 + (0.556*air_pred)) %>%
- filter(water_pred > 20) 
-
-# y=6.71+0.48x	
-
-NUmpqua_AboveSteam_climate <- airwater_join %>%
- mutate(air_pred = air_mean + 3.5) %>% 
- mutate(water_pred = 6.71 + (0.48*air_pred)) %>%
- filter(water_pred > 20)
-
-# y=5.37 + 0.566	
-BigBend_climate <- airwater_join %>%
- mutate(air_pred = air_mean + 3.5) %>% 
- mutate(water_pred = 5.37 + (0.566*air_pred)) %>%
- filter(water_pred > 20)
-
-# y=7.04 + 0.727x	
-SteamCant_climate <- airwater_join %>%
- mutate(air_pred = air_mean + 3.5) %>% 
- mutate(water_pred = 7.04 + (0.727*air_pred)) %>%
- filter(water_pred > 20)
-
-# y=7.9+0.401x	
-FishCr_climate <- airwater_join %>%
- mutate(air_pred = air_mean + 3.5) %>% 
- mutate(water_pred = 7.9 + (0.401*air_pred)) %>%
- filter(water_pred > 20)
-```
-
-
-
