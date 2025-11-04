@@ -382,19 +382,60 @@ the North Umpqua Basin: Genetic Insights and Management Opportunities,
 </div>
 <div id="fish-cr.-at-mouth" class="section level4">
 <h4>15110003 - Fish Cr. at mouth</h4>
+</div>
+</div>
+<div id="air-logger-ids" class="section level3">
+<h3>Air Logger IDs:</h3>
+<div id="copeland-cr." class="section level4">
+<h4>21433138 - Copeland Cr.</h4>
+</div>
+<div id="n.-umpqua-at-steamboat-cr." class="section level4">
+<h4>21679162 - N. Umpqua at Steamboat Cr.</h4>
 <pre class="r"><code># Load packages
 
 library(tidyverse)
 library(readxl)
 library(janitor)
 library(writexl)
-library(readr)
-#library(tinytex)</code></pre>
+library(readr)</code></pre>
 <pre class="r"><code># Read in 2024 temp logger data summaries
 
 daily_water_master &lt;- read_xlsx(&quot;2024 Logger Sites/Water/daily_water_master.xlsx&quot;)
 daily_air_master &lt;- read_xlsx(&quot;2024 Logger Sites/Air/daily_air_master.xlsx&quot;)</code></pre>
 <p><br></p>
+<pre class="r"><code># Air logger look up function
+air_logger &lt;- function(log_id){
+  daily_air_master %&gt;% 
+  filter(logger_id == log_id) %&gt;% 
+  mutate(longdate = make_date(year,month,day)) %&gt;% 
+  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
+  mutate(air_mean = mean_temp) 
+}
+
+# Water logger look up function
+water_logger &lt;- function(log_id) {
+  daily_water_master %&gt;% 
+  filter(logger_id == log_id) %&gt;% 
+  mutate(longdate = make_date(year,month,day)) %&gt;%
+  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
+  mutate(water_max = max_temp)
+}
+
+# Join air &amp; water readings function
+logger_join &lt;- function() {
+  water %&gt;% 
+  left_join(air, by = &quot;longdate&quot;)
+}
+
+# Regression equation function for plots
+lm_eqn &lt;- function(df){
+    m &lt;- lm(water_max ~ air_mean, df);
+    eq &lt;- substitute(italic(y) == a + b %.% italic(x)*&quot;,&quot;~~italic(r)^2~&quot;=&quot;~r2, 
+         list(a = format(unname(coef(m)[1]), digits = 3),
+              b = format(unname(coef(m)[2]), digits = 3),
+             r2 = format(summary(m)$adj.r.squared, digits = 3)))
+    as.character(as.expression(eq));
+}                 </code></pre>
 </div>
 </div>
 <div id="steamboat-above-big-bend-cr.-1" class="section level1">
@@ -453,33 +494,14 @@ plot_21679180</code></pre>
 # ggsave(plot_21679180, file=&quot;Figure Plots/Temp Plots/Temp Plot_SteamboatAboveBigBend.png&quot;, height = 5, width = 8) #Figure Dimensions 4&quot; x 6&quot;</code></pre>
 <pre class="r"><code>## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air &lt;- daily_air_master %&gt;% 
-  filter(logger_id == &quot;21679162&quot;) %&gt;% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %&gt;% 
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air &lt;- air_logger(&quot;21679162&quot;) 
 
-# Prepare individual water logger data for regression
-water &lt;- daily_water_master %&gt;% 
-  filter(logger_id == &#39;21679180&#39;) %&gt;% 
-  mutate(longdate = make_date(year,month,day)) %&gt;%
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(water_max = max_temp)
+# Water logger
+water &lt;- water_logger(&quot;21679180&quot;)
 
-# Join air/water data frames for linear regression
-airwater_join &lt;- water %&gt;% 
-  left_join(air, by = &quot;longdate&quot;)
-
-# Create equation formula for regression equation
-lm_eqn &lt;- function(df){
-    m &lt;- lm(water_max ~ air_mean, df);
-    eq &lt;- substitute(italic(y) == a + b %.% italic(x)*&quot;,&quot;~~italic(r)^2~&quot;=&quot;~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join &lt;- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation &lt;- cor(airwater_join$water_max, airwater_join$air_mean, method = &#39;pearson&#39;)
@@ -701,31 +723,16 @@ BigBend_Days20_Plot</code></pre>
 # ggsave(BigBend_Days20_Plot, file=&quot;Figure Plots/Temp Plots/DaysOver20C_BigBend.png&quot;, height = 4, width = 6) </code></pre>
 <pre class="r"><code>## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air &lt;- daily_air_master %&gt;% 
-  filter(logger_id == &quot;21679162&quot;) %&gt;% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %&gt;% 
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air &lt;- air_logger(&quot;21679162&quot;) 
 
-# Prepare individual water logger data for regression
+# Water logger
 water &lt;- BigBend %&gt;% 
   filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
   mutate(water_max = max_temp)
 
-# Join air/water data frames for linear regression
-airwater_join &lt;- water %&gt;% 
-  left_join(air, by = &quot;longdate&quot;)
-
-# Create equation formula for regression equation
-lm_eqn &lt;- function(df){
-    m &lt;- lm(water_max ~ air_mean, df);
-    eq &lt;- substitute(italic(y) == a + b %.% italic(x)*&quot;,&quot;~~italic(r)^2~&quot;=&quot;~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join &lt;- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation &lt;- cor(airwater_join$water_max, airwater_join$air_mean, method = &#39;pearson&#39;)
@@ -846,35 +853,15 @@ plot_21679175</code></pre>
 ggsave(plot_21679175, file=&quot;Figure Plots/Temp Plots/Temp Plot_SteamboatBelowBigBend.png&quot;, height = 5, width = 8) #Figure Dimensions 4&quot; x 6&quot;</code></pre>
 <pre class="r"><code>## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air &lt;- daily_air_master %&gt;% 
-  filter(logger_id == &quot;21679162&quot;) %&gt;% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %&gt;% 
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air &lt;- air_logger(&quot;21679162&quot;) 
 
-# Prepare individual water logger data for regression
-water &lt;- daily_water_master %&gt;% 
-  filter(logger_id == &#39;21679175&#39;) %&gt;% 
-  mutate(longdate = make_date(year,month,day)) %&gt;%
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(water_max = max_temp)
+# Water logger
+water &lt;- water_logger(&quot;21679175&quot;)
 
-# Join air/water data frames for linear regression
-airwater_join &lt;- water %&gt;% 
-  left_join(air, by = &quot;longdate&quot;)
-
-# Create equation formula for regression equation
-
-lm_eqn &lt;- function(df){
-    m &lt;- lm(water_max ~ air_mean, df);
-    eq &lt;- substitute(italic(y) == a + b %.% italic(x)*&quot;,&quot;~~italic(r)^2~&quot;=&quot;~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
-
+# Join air/water readings
+airwater_join &lt;- logger_join()
+                
 # Calculate Pearson correlation coefficient
 correlation &lt;- cor(airwater_join$water_max, airwater_join$air_mean, method = &#39;pearson&#39;)
 print(paste(&quot;Pearson R:&quot;,correlation))</code></pre>
@@ -1091,32 +1078,16 @@ SteamboatCant_Days20_Plot</code></pre>
 ggsave(SteamboatCant_Days20_Plot, file=&quot;Figure Plots/Temp Plots/DaysOver20C_SteamboatAboveCant.png&quot;, height = 5, width = 8)</code></pre>
 <pre class="r"><code>## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air &lt;- daily_air_master %&gt;% 
-  filter(logger_id == &quot;21679162&quot;) %&gt;% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %&gt;% 
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(air_mean = mean_temp)  
-
-# Prepare individual water logger data for regression
+# Air logger
+air &lt;- air_logger(&quot;21679162&quot;)
+  
+# Water logger
 water &lt;- Steamboat_AboveCant  %&gt;% 
   filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
   mutate(water_max = max_temp)
 
-# Join air/water data frames for linear regression
-airwater_join &lt;- water %&gt;% 
-  left_join(air, by = &quot;longdate&quot;)
-
-# Create equation formula for regression equation
-
-lm_eqn &lt;- function(df){
-    m &lt;- lm(water_max ~ air_mean, df);
-    eq &lt;- substitute(italic(y) == a + b %.% italic(x)*&quot;,&quot;~~italic(r)^2~&quot;=&quot;~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join &lt;- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation &lt;- cor(airwater_join$water_max, airwater_join$air_mean, method = &#39;pearson&#39;)
@@ -1236,34 +1207,14 @@ plot_21679177</code></pre>
 # ggsave(plot_21679177, file=&quot;Figure Plots/Temp Plots/Temp Plot_UpperCanton.png&quot;, height = 5, width = 8) #Figure Dimensions 4&quot; x 6&quot;</code></pre>
 <pre class="r"><code>## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air &lt;- daily_air_master %&gt;% 
-  filter(logger_id == &quot;21679162&quot;) %&gt;% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %&gt;% 
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air &lt;- air_logger(&quot;21679162&quot;)
 
-# Prepare individual water logger data for regression
-water &lt;- daily_water_master %&gt;% 
-  filter(logger_id == &#39;21679177&#39;) %&gt;% 
-  mutate(longdate = make_date(year,month,day)) %&gt;%
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(water_max = max_temp)
+# Water logger
+water &lt;- water_logger(&quot;21679177&quot;)
 
-# Join air/water data frames for linear regression
-airwater_join &lt;- water %&gt;% 
-  left_join(air, by = &quot;longdate&quot;)
-
-# Create equation formula for regression equation
-
-lm_eqn &lt;- function(df){
-    m &lt;- lm(water_max ~ air_mean, df);
-    eq &lt;- substitute(italic(y) == a + b %.% italic(x)*&quot;,&quot;~~italic(r)^2~&quot;=&quot;~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join &lt;- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation &lt;- cor(airwater_join$water_max, airwater_join$air_mean, method = &#39;pearson&#39;)
@@ -1385,34 +1336,14 @@ plot_21433141</code></pre>
 # ggsave(plot_21433141, file=&quot;Figure Plots/Temp Plots/Temp Plot_NUmpqua_AboveSteam.png&quot;, height = 5, width = 8) #Figure Dimensions 4&quot; x 6&quot;</code></pre>
 <pre class="r"><code>## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air &lt;- daily_air_master %&gt;% 
-  filter(logger_id == &quot;21679162&quot;) %&gt;% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %&gt;% 
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air &lt;- air_logger(&quot;21679162&quot;)
 
-# Prepare individual water logger data for regression
-water &lt;- daily_water_master %&gt;% 
-  filter(logger_id == &#39;21433141&#39;) %&gt;% 
-  mutate(longdate = make_date(year,month,day)) %&gt;%
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(water_max = max_temp)
+# Water logger
+water &lt;- water_logger(&quot;21433141&quot;)
 
-# Join air/water data frames for linear regression
-airwater_join &lt;- water %&gt;% 
-  left_join(air, by = &quot;longdate&quot;)
-
-# Create equation formula for regression equation
-
-lm_eqn &lt;- function(df){
-    m &lt;- lm(water_max ~ air_mean, df);
-    eq &lt;- substitute(italic(y) == a + b %.% italic(x)*&quot;,&quot;~~italic(r)^2~&quot;=&quot;~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join &lt;- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation &lt;- cor(airwater_join$water_max, airwater_join$air_mean, method = &#39;pearson&#39;)
@@ -1630,32 +1561,16 @@ FishCr_Days20_Plot</code></pre>
 <pre class="r"><code>#ggsave(FishCr_Days20_Plot, file=&quot;Figure Plots/Temp Plots/DaysOver20C_FishCreek.png&quot;, height = 5, width = 8) #Figure Dimensions 4&quot; x 6&quot;</code></pre>
 <pre class="r"><code>## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air &lt;- daily_air_master %&gt;% 
-  filter(logger_id == &quot;21433138&quot;) %&gt;% # Copeland Cr. at mouth air logger
-  mutate(longdate = make_date(year,month,day)) %&gt;% 
-  filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air &lt;- air_logger(&quot;21433138&quot;)
 
-# Prepare individual water logger data for regression
+# Water logger
 water &lt;- FishCr %&gt;% 
   filter(longdate &gt; &#39;2024-06-19&#39; &amp; longdate &lt;= &#39;2024-09-15&#39;) %&gt;% 
   mutate(water_max = max_temp)
 
-# Join air/water data frames for linear regression
-airwater_join &lt;- water %&gt;% 
-  left_join(air, by = &quot;longdate&quot;)
-
-# Create equation formula for regression equation
-
-lm_eqn &lt;- function(df){
-    m &lt;- lm(water_max ~ air_mean, df);
-    eq &lt;- substitute(italic(y) == a + b %.% italic(x)*&quot;,&quot;~~italic(r)^2~&quot;=&quot;~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join &lt;- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation &lt;- cor(airwater_join$water_max, airwater_join$air_mean, method = &#39;pearson&#39;)

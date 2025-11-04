@@ -23,6 +23,10 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 #### 21433141 - N. Umpqua above Steamboat Cr.
 #### 15110003 - Fish Cr. at mouth
 
+### Air Logger IDs:
+#### 21433138 - Copeland Cr.
+#### 21679162 - N. Umpqua at Steamboat Cr.
+
 ```{r}
 # Load packages
 
@@ -31,7 +35,6 @@ library(readxl)
 library(janitor)
 library(writexl)
 library(readr)
-#library(tinytex)
 ```
 
 ```{r Read in 2024 WSC temp data}
@@ -41,6 +44,44 @@ daily_water_master <- read_xlsx("2024 Logger Sites/Water/daily_water_master.xlsx
 daily_air_master <- read_xlsx("2024 Logger Sites/Air/daily_air_master.xlsx")
 ```
 <br>
+
+```{r Define functions for regression analysis}
+
+# Air logger look up function
+air_logger <- function(log_id){
+  daily_air_master %>% 
+  filter(logger_id == log_id) %>% 
+  mutate(longdate = make_date(year,month,day)) %>% 
+  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
+  mutate(air_mean = mean_temp) 
+}
+
+# Water logger look up function
+water_logger <- function(log_id) {
+  daily_water_master %>% 
+  filter(logger_id == log_id) %>% 
+  mutate(longdate = make_date(year,month,day)) %>%
+  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
+  mutate(water_max = max_temp)
+}
+
+# Join air & water readings function
+logger_join <- function() {
+  water %>% 
+  left_join(air, by = "longdate")
+}
+
+# Regression equation function for plots
+lm_eqn <- function(df){
+    m <- lm(water_max ~ air_mean, df);
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+         list(a = format(unname(coef(m)[1]), digits = 3),
+              b = format(unname(coef(m)[2]), digits = 3),
+             r2 = format(summary(m)$adj.r.squared, digits = 3)))
+    as.character(as.expression(eq));
+}                 
+```
+
 
 # Steamboat Above Big Bend Cr.
 ```{r Steamboat_AboveBigBend - Stats}
@@ -106,38 +147,18 @@ plot_21679180
 ```{r Steamboat_AboveBigBend - Regression Plot & Future Climate Scenario}
 ## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %>% 
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air <- air_logger("21679162") 
 
-# Prepare individual water logger data for regression
-water <- daily_water_master %>% 
-  filter(logger_id == '21679180') %>% 
-  mutate(longdate = make_date(year,month,day)) %>%
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(water_max = max_temp)
+# Water logger
+water <- water_logger("21679180")
 
-# Join air/water data frames for linear regression
-airwater_join <- water %>% 
-  left_join(air, by = "longdate")
-
-# Create equation formula for regression equation
-lm_eqn <- function(df){
-    m <- lm(water_max ~ air_mean, df);
-    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join <- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
 print(paste("Pearson R:",correlation))
-
 
 # Linear model fit summary
 fit <- lm(water_max ~ air_mean, data = airwater_join)
@@ -344,31 +365,16 @@ BigBend_Days20_Plot
 ```{r Big Bend - Regression Plot & Future Climate Scenario}
 ## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %>% 
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air <- air_logger("21679162") 
 
-# Prepare individual water logger data for regression
+# Water logger
 water <- BigBend %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(water_max = max_temp)
 
-# Join air/water data frames for linear regression
-airwater_join <- water %>% 
-  left_join(air, by = "longdate")
-
-# Create equation formula for regression equation
-lm_eqn <- function(df){
-    m <- lm(water_max ~ air_mean, df);
-    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join <- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
@@ -478,42 +484,21 @@ ggsave(plot_21679175, file="Figure Plots/Temp Plots/Temp Plot_SteamboatBelowBigB
 ```{r Steamboat_BelowBigBend - Resgression Plots & Future Climate Scenario}
 ## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %>% 
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air <- air_logger("21679162") 
 
-# Prepare individual water logger data for regression
-water <- daily_water_master %>% 
-  filter(logger_id == '21679175') %>% 
-  mutate(longdate = make_date(year,month,day)) %>%
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(water_max = max_temp)
+# Water logger
+water <- water_logger("21679175")
 
-# Join air/water data frames for linear regression
-airwater_join <- water %>% 
-  left_join(air, by = "longdate")
-
-# Create equation formula for regression equation
-
-lm_eqn <- function(df){
-    m <- lm(water_max ~ air_mean, df);
-    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
-
+# Join air/water readings
+airwater_join <- logger_join()
+                
 # Calculate Pearson correlation coefficient
 correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
 print(paste("Pearson R:",correlation))
 
 fit <- lm(water_max ~ air_mean, data = airwater_join)
 summary(fit)
-
 
 # Create regression plot
 
@@ -715,32 +700,16 @@ ggsave(SteamboatCant_Days20_Plot, file="Figure Plots/Temp Plots/DaysOver20C_Stea
 ```{r Steamboat_AboveCanton - Regression Plots & Future Climate Scenario}
 ## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %>% 
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(air_mean = mean_temp)  
-
-# Prepare individual water logger data for regression
+# Air logger
+air <- air_logger("21679162")
+  
+# Water logger
 water <- Steamboat_AboveCant  %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(water_max = max_temp)
 
-# Join air/water data frames for linear regression
-airwater_join <- water %>% 
-  left_join(air, by = "longdate")
-
-# Create equation formula for regression equation
-
-lm_eqn <- function(df){
-    m <- lm(water_max ~ air_mean, df);
-    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join <- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
@@ -852,34 +821,14 @@ plot_21679177
 ```{r UpperCanton - Regression Plots & Future Climate Scenario}
 ## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %>% 
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air <- air_logger("21679162")
 
-# Prepare individual water logger data for regression
-water <- daily_water_master %>% 
-  filter(logger_id == '21679177') %>% 
-  mutate(longdate = make_date(year,month,day)) %>%
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(water_max = max_temp)
+# Water logger
+water <- water_logger("21679177")
 
-# Join air/water data frames for linear regression
-airwater_join <- water %>% 
-  left_join(air, by = "longdate")
-
-# Create equation formula for regression equation
-
-lm_eqn <- function(df){
-    m <- lm(water_max ~ air_mean, df);
-    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join <- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
@@ -991,34 +940,14 @@ plot_21433141
 ```{r NUmpqua_AboveSteam - Regression Plots & Future Climate Scenario}
 ## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air <- daily_air_master %>% 
-  filter(logger_id == "21679162") %>% # N. Umpqua at Steamboat air logger
-  mutate(longdate = make_date(year,month,day)) %>% 
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air <- air_logger("21679162")
 
-# Prepare individual water logger data for regression
-water <- daily_water_master %>% 
-  filter(logger_id == '21433141') %>% 
-  mutate(longdate = make_date(year,month,day)) %>%
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(water_max = max_temp)
+# Water logger
+water <- water_logger("21433141")
 
-# Join air/water data frames for linear regression
-airwater_join <- water %>% 
-  left_join(air, by = "longdate")
-
-# Create equation formula for regression equation
-
-lm_eqn <- function(df){
-    m <- lm(water_max ~ air_mean, df);
-    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join <- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
@@ -1228,32 +1157,16 @@ FishCr_Days20_Plot
 ```{r Fish Cr - Regression Plots & Future Climate Scenario}
 ## Air/Water Regression Plot
 
-# Prepare air logger data for regression
-air <- daily_air_master %>% 
-  filter(logger_id == "21433138") %>% # Copeland Cr. at mouth air logger
-  mutate(longdate = make_date(year,month,day)) %>% 
-  filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
-  mutate(air_mean = mean_temp)  
+# Air logger
+air <- air_logger("21433138")
 
-# Prepare individual water logger data for regression
+# Water logger
 water <- FishCr %>% 
   filter(longdate > '2024-06-19' & longdate <= '2024-09-15') %>% 
   mutate(water_max = max_temp)
 
-# Join air/water data frames for linear regression
-airwater_join <- water %>% 
-  left_join(air, by = "longdate")
-
-# Create equation formula for regression equation
-
-lm_eqn <- function(df){
-    m <- lm(water_max ~ air_mean, df);
-    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
-         list(a = format(unname(coef(m)[1]), digits = 3),
-              b = format(unname(coef(m)[2]), digits = 3),
-             r2 = format(summary(m)$adj.r.squared, digits = 3)))
-    as.character(as.expression(eq));
-}                 
+# Join air/water readings
+airwater_join <- logger_join()
 
 # Calculate Pearson correlation coefficient
 correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
