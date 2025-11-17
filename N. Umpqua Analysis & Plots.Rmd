@@ -127,6 +127,7 @@ plot_21679180 <- ggplot() +
   geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1) +
   geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 0.5) +
   geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 0.5) +
+  annotate("text", x = as.Date("2024-08-21"), y = 25, label = "Zone of Physiological Stress", size = 5, color ="red", fontface = "italic") +
   scale_colour_manual("", 
                       breaks = c("mean_temp", "min_temp", "max_temp"),
                       values = c("black", "blue", "red"),
@@ -137,9 +138,8 @@ plot_21679180 <- ggplot() +
   labs(title= "Steamboat above Big Bend Cr.",
        y="Temperature (\u00B0C)", 
        x="") +
-  theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size= 14, face="bold"),
-        axis.text=element_text(size= 12),
+  theme(plot.title = element_text(size= 16, face="bold"),
+        axis.text=element_text(size= 14),
         axis.title=element_text(size= 14), 
         legend.position = "bottom")
 
@@ -148,7 +148,7 @@ rm(temp)
 plot_21679180
 
 # Export plot to file
-# ggsave(plot_21679180, file="Figure Plots/Temp Plots/Temp Plot_SteamboatAboveBigBend.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
+ ggsave(plot_21679180, file="Figure Plots/Temp Plots/Temp Plot_SteamboatAboveBigBend.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
 
 ```
 
@@ -191,7 +191,7 @@ reg_plot_21679180 <- ggplot(airwater_join, aes(x= air_mean, y = water_max)) +
 reg_plot_21679180
 
 # Export plot to file
-# ggsave(reg_plot_21679180, file="Figure Plots/Regression Plots/regression_plot_SteamboatAboveBigBend.png", height = 4, width = 6)
+ggsave(reg_plot_21679180, file="Figure Plots/Regression Plots/regression_plot_SteamboatAboveBigBend.png", height = 4, width = 6)
 
 
 #---------------------------------------------------------------------------------------------------
@@ -316,8 +316,7 @@ plot_15170014 <- ggplot() +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by= 2)) +
   theme_bw() +
   labs(title= "Big Bend Cr. at mouth", y="Temperature (\u00B0C)", x="") +
-  theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size= 14, face="bold"),
+  theme(plot.title = element_text(size= 14, face="bold"),
         axis.text=element_text(size= 12),
         axis.title=element_text(size= 14),
         legend.position = "bottom")
@@ -453,8 +452,7 @@ plot_21679175 <- ggplot() +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by= 2)) +
   theme_bw() +
   labs(title= "Steamboat below Big Bend Cr.", y="Temperature (\u00B0C)", x="") +
-  theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold"),
+  theme(plot.title = element_text(size=14, face="bold"),
         axis.text=element_text(size=12),
         axis.title=element_text(size=14),
         legend.position = "bottom") 
@@ -632,8 +630,7 @@ plot_15170003 <- ggplot() +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by=2)) +
   theme_bw() +
   labs(title= "Steamboat above Canton Cr.", y="Temperature (\u00B0C)", x="") +
-  theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold"),
+  theme(plot.title = element_text(size=14, face="bold"),
         axis.text=element_text(size=12),
         axis.title=element_text(size=14),
         legend.position = "bottom")
@@ -769,8 +766,7 @@ plot_21679177 <- ggplot() +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by= 2)) +
   theme_bw() +
   labs(title= "Upper Canton Cr.", y="Temperature (\u00B0C)", x="") +
-  theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold"),
+  theme(plot.title = element_text(size=14, face="bold"),
         axis.text=element_text(size=12), 
         xis.title=element_text(size=14),
         legend.position = "bottom")
@@ -877,8 +873,7 @@ plot_21433141 <- ggplot() +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by=2)) +
   theme_bw() +
   labs(title= "N. Umpqua above Steamboat Cr.", y="Temperature (\u00B0C)", x="") +
-  theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold"),
+  theme(plot.title = element_text(size=14, face="bold"),
         axis.text=element_text(size=12),
         axis.title=element_text(size=14),
         legend.position = "bottom") 
@@ -1055,8 +1050,7 @@ plot_15110003 <- ggplot() +
   scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by=2)) +
   theme_bw() +
   labs(title= "Fish Cr. at mouth", y="Temperature (\u00B0C)", x="") +
-  theme(plot.subtitle = element_text(size = 10),
-        plot.title = element_text(size=14, face="bold"),
+  theme(plot.title = element_text(size=14, face="bold"),
         axis.text=element_text(size=12),
         axis.title=element_text(size=14),
         legend.position = "bottom")
