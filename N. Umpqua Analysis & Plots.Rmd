@@ -34,6 +34,7 @@ library(readxl)
 library(janitor)
 library(writexl)
 library(readr)
+library(ggtext)
 ```
 
 ```{r Read in 2024 WSC temp data}
@@ -178,20 +179,25 @@ reg_plot_21679180 <- ggplot(airwater_join, aes(x= air_mean, y = water_max)) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
   labs(title="Steamboat above Big Bend Cr. (Air - N. Umpqua at Steamboat)",
-       subtitle = "Max Water Temp ~ Mean Air Temp",
+      # subtitle = "Max Water Temp ~ Mean Air Temp",
        x="Daily Mean Air temperature (\u00B0C)",
        y="Daily Max Water temperature (\u00B0C)") + 
   geom_text(x = 16, y = 24, label = lm_eqn(airwater_join), parse = TRUE)  + 
   geom_text(x = 16, y = 23, label = paste("Pearson R:", round(correlation,3))) +
-  theme(plot.title = element_text(size= 12, face="bold"),
-        plot.subtitle = element_text(size = 11),
-        axis.text=element_text(size= 8),
-        axis.title=element_text(size= 10)) 
+  theme(plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size= 10),
+        axis.title=element_text(size= 11),
+        plot.title = element_textbox(
+        size = 13,
+        color = "white", fill = "#5D729D", box.color = "#4A618C",
+        halign = 0.5, linetype = 1, r = unit(5, "pt"), width = unit(1, "npc"),
+        padding = margin(2, 0, 1, 0), margin = margin(3, 3, 3, 3)
+        )) 
 
 reg_plot_21679180
 
 # Export plot to file
-ggsave(reg_plot_21679180, file="Figure Plots/Regression Plots/regression_plot_SteamboatAboveBigBend.png", height = 4, width = 6)
+# ggsave(reg_plot_21679180, file="Figure Plots/Regression Plots/regression_plot_SteamboatAboveBigBend.png", height = 4, width = 6)
 
 
 #---------------------------------------------------------------------------------------------------
@@ -387,15 +393,20 @@ reg_plot_15170014 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
   labs(title="Big Bend Cr. at mouth (Air - N. Umpqua at Steamboat)",
-       subtitle = "Max Water Temp ~ Mean Air Temp",
+       #subtitle = "Max Water Temp ~ Mean Air Temp",
        x="Daily Mean Air temperature (\u00B0C)",
        y="Daily Max Water temperature (\u00B0C)") + 
   geom_text(x = 16, y = 19, label = lm_eqn(airwater_join), parse = TRUE)  + 
   geom_text(x = 16, y = 18, label = paste("Pearson R:", round(correlation,3))) +
-  theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11),
-        axis.text=element_text(size=8),
-         axis.title=element_text(size=10)) 
+  theme(plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size= 10),
+        axis.title=element_text(size= 11),
+        plot.title = element_textbox(
+        size = 13,
+        color = "white", fill = "#5D729D", box.color = "#4A618C",
+        halign = 0.5, linetype = 1, r = unit(5, "pt"), width = unit(1, "npc"),
+        padding = margin(2, 0, 1, 0), margin = margin(3, 3, 3, 3)
+        )) 
 
 reg_plot_15170014
 
@@ -492,15 +503,20 @@ reg_plot_21679175 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
   labs(title="Steamboat below Big Bend Cr. (Air - N. Umpqua at Steamboat)",
-       subtitle = "Max Water Temp ~ Mean Air Temp",
+       #subtitle = "Max Water Temp ~ Mean Air Temp",
        x="Daily Mean Air temperature (\u00B0C)",
        y="Daily Max Water temperature (\u00B0C)") + 
   geom_text(x = 16, y = 21, label = lm_eqn(airwater_join), parse = TRUE)  + 
   geom_text(x = 16, y = 20, label = paste("Pearson R:", round(correlation,3))) +
-  theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11),
-        axis.text=element_text(size=8),
-        axis.title=element_text(size=10))
+  theme(plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size= 10),
+        axis.title=element_text(size= 11),
+        plot.title = element_textbox(
+        size = 13,
+        color = "white", fill = "#5D729D", box.color = "#4A618C",
+        halign = 0.5, linetype = 1, r = unit(5, "pt"), width = unit(1, "npc"),
+        padding = margin(2, 0, 1, 0), margin = margin(3, 3, 3, 3)
+        )) 
 
 reg_plot_21679175
 
@@ -698,15 +714,20 @@ reg_plot_15170003 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
  labs(title="Steamboat above Canton Cr. (Air - N. Umpqua at Steamboat)",
-       subtitle = "Max Water Temp ~ Mean Air Temp",
+       #subtitle = "Max Water Temp ~ Mean Air Temp",
        x="Daily Mean Air temperature (\u00B0C)",
        y="Daily Max Water temperature (\u00B0C)") + 
   geom_text(x = 16, y = 24, label = lm_eqn(airwater_join), parse = TRUE)  + 
   geom_text(x = 16, y = 23, label = paste("Pearson R:", round(correlation,3))) +
-  theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11),
-        axis.text=element_text(size=11),
-        axis.title=element_text(size=14)) 
+  theme(plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size= 10),
+        axis.title=element_text(size= 11),
+        plot.title = element_textbox(
+        size = 13,
+        color = "white", fill = "#5D729D", box.color = "#4A618C",
+        halign = 0.5, linetype = 1, r = unit(5, "pt"), width = unit(1, "npc"),
+        padding = margin(2, 0, 1, 0), margin = margin(3, 3, 3, 3)
+        )) 
 
 reg_plot_15170003
 
@@ -806,15 +827,20 @@ reg_plot_21679177 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
   labs(title="Upper Canton Cr. (Air - N. Umpqua at Steamboat)",
-       subtitle = "Max Water Temp ~ Mean Air Temp",
+       #subtitle = "Max Water Temp ~ Mean Air Temp",
        x="Daily Mean Air temperature (\u00B0C)",
        y="Daily Max Water temperature (\u00B0C)") + 
   geom_text(x = 16, y = 21, label = lm_eqn(airwater_join), parse = TRUE)  + 
   geom_text(x = 16, y = 20.25, label = paste("Pearson R:", round(correlation,3))) +
-  theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11),
-        axis.text=element_text(size=8),
-        axis.title=element_text(size=10))
+  theme(plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size= 10),
+        axis.title=element_text(size= 11),
+        plot.title = element_textbox(
+        size = 13,
+        color = "white", fill = "#5D729D", box.color = "#4A618C",
+        halign = 0.5, linetype = 1, r = unit(5, "pt"), width = unit(1, "npc"),
+        padding = margin(2, 0, 1, 0), margin = margin(3, 3, 3, 3)
+        )) 
  
 
 reg_plot_21679177
@@ -913,15 +939,20 @@ reg_plot_21433141 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
   labs(title="North Umpqua above Steamboat Cr. (Air - N. Umpqua at Steamboat)",
-       subtitle = "Max Water Temp ~ Mean Air Temp",
+       #subtitle = "Max Water Temp ~ Mean Air Temp",
        x="Daily Mean Air temperature (\u00B0C)",
        y="Daily Max Water temperature (\u00B0C)") + 
   geom_text(x = 16, y = 19, label = lm_eqn(airwater_join), parse = TRUE)  + 
   geom_text(x = 16, y = 18.5, label = paste("Pearson R:", round(correlation,3))) +
-  theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11),
-        axis.text=element_text(size=8),
-        axis.title=element_text(size=10))
+  theme(plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size= 10),
+        axis.title=element_text(size= 11),
+        plot.title = element_textbox(
+        size = 13,
+        color = "white", fill = "#5D729D", box.color = "#4A618C",
+        halign = 0.5, linetype = 1, r = unit(5, "pt"), width = unit(1, "npc"),
+        padding = margin(2, 0, 1, 0), margin = margin(3, 3, 3, 3)
+        )) 
 
 reg_plot_21433141
 
@@ -1120,15 +1151,20 @@ reg_plot_15110003 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
   geom_smooth(method = "lm", se = TRUE, colour = 'black') +
   theme_light() + 
   labs(title="Fish Cr. at mouth (Air - Copeland Cr. at mouth)",
-       subtitle = "Max Water Temp ~ Mean Air Temp",
+       #subtitle = "Max Water Temp ~ Mean Air Temp",
        x="Daily Mean Air temperature (\u00B0C)",
        y="Daily Max Water temperature (\u00B0C)") + 
   geom_text(x = 15, y = 17.5, label = lm_eqn(airwater_join), parse = TRUE)  + 
   geom_text(x = 15, y = 17, label = paste("Pearson R:", round(correlation,3))) +
-  theme(plot.title = element_text(size=12, face="bold"),
-        plot.subtitle = element_text(size = 11),
-        axis.text=element_text(size=8),
-         axis.title=element_text(size=10))
+  theme(plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size= 10),
+        axis.title=element_text(size= 11),
+        plot.title = element_textbox(
+        size = 13,
+        color = "white", fill = "#5D729D", box.color = "#4A618C",
+        halign = 0.5, linetype = 1, r = unit(5, "pt"), width = unit(1, "npc"),
+        padding = margin(2, 0, 1, 0), margin = margin(3, 3, 3, 3)
+        )) 
 
 reg_plot_15110003
 
