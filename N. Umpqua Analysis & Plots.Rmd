@@ -856,6 +856,123 @@ future_climate_predict()
 ```
 <br>
 
+# Lower Canton Cr.
+
+```{r LowerCanton - Stats}
+# Logger ID: 21679176 (WSC logger data)
+
+# Read in 2024 WSC data and filter for summer season
+LowerCanton <- daily_water_master %>% 
+  filter(logger_id == 21679176 & longdate > '2024-06-19' & longdate <= '2024-09-15')
+
+# 2024 Max Temp
+LowerCanton_maxt <- max(LowerCanton$max_temp) 
+print(paste("Max Temp C (2024):", LowerCanton_maxt))
+
+# 2024 # Days above 20C
+LowerCanton_Days20 <- sum(LowerCanton$max_temp > 20)
+print(paste("# Days above 20C (2024):", LowerCanton_Days20))
+
+```
+```{r LowerCanton - Temp Plots}
+
+### Mean, Min, Max Temp Plot 
+
+# Plot data frame
+temp <-LowerCanton
+
+x=as.Date(temp$longdate)
+y_lower = 20
+y_upper = Inf
+
+# Create temp plot
+plot_21679176 <- ggplot() +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
+  geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 0.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 0.5) +
+  
+  scale_colour_manual("", 
+                      breaks = c("mean_temp", "min_temp", "max_temp"),
+                      values = c("black", "blue", "red"),
+                      labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(10,26,by= 2)) +
+  theme_bw() +
+  labs(title= "Lower Canton Cr.", y="Temperature (\u00B0C)", x="") +
+  theme(plot.title = element_text(size=14, face="bold"),
+        axis.text=element_text(size=12), 
+        xis.title=element_text(size=14),
+        legend.position = "bottom")
+  
+rm(temp)
+
+plot_21679176
+
+# Export plot to file 
+ ggsave(plot_21679176, file="Figure Plots/Temp Plots/Temp Plot_LowerCanton.png", height = 5, width = 8) #Figure Dimensions 4" x 6"
+
+
+```
+
+```{r LowerCanton - Regression Plots & Future Climate Scenario}
+
+## Air/Water Regression Plot
+
+# Air logger
+air <- air_logger("21679162")
+
+# Water logger
+water <- water_logger("21679176")
+
+# Join air/water readings
+airwater_join <- logger_join()
+
+# Calculate Pearson correlation coefficient
+correlation <- cor(airwater_join$water_max, airwater_join$air_mean, method = 'pearson')
+print(paste("Pearson R:",correlation))
+
+# Summary of linear model fit
+fit <- lm(water_max ~ air_mean, data = airwater_join)
+summary(fit)
+
+
+# Create regression plot
+reg_plot_21679176 <- ggplot(airwater_join, aes(x=air_mean, y = water_max)) +
+  geom_point(shape= 21, color='black', fill= 'deepskyblue3', size = 2) +
+  geom_smooth(method = "lm", se = TRUE, colour = 'black') +
+  theme_light() + 
+  labs(title="Lower Canton Cr. (Air - N. Umpqua at Steamboat)",
+       #subtitle = "Max Water Temp ~ Mean Air Temp",
+       x="Daily Mean Air temperature (\u00B0C)",
+       y="Daily Max Water temperature (\u00B0C)") + 
+  geom_text(x = 16, y = 21, label = lm_eqn(airwater_join), parse = TRUE)  + 
+  geom_text(x = 16, y = 20.25, label = paste("Pearson R:", round(correlation,3))) +
+  theme(plot.subtitle = element_text(size = 11),
+        axis.text=element_text(size= 10),
+        axis.title=element_text(size= 11),
+        plot.title = element_textbox(
+        size = 13,
+        color = "white", fill = "#5D729D", box.color = "#4A618C",
+        halign = 0.5, linetype = 1, r = unit(5, "pt"), width = unit(1, "npc"),
+        padding = margin(2, 0, 1, 0), margin = margin(3, 3, 3, 3)
+        )) 
+ 
+
+reg_plot_21679176
+
+# Export plot to file
+ ggsave(reg_plot_21679176, file="Figure Plots/Regression Plots/regression_plot_LowerCanton.png", height = 4, width = 6)
+
+#---------------------------------------------------------------------------------------------------
+
+## Climate Scenario (3.5C air temp warming)
+
+future_climate_predict()
+```
+
+
 # N. Umpqua above Steamboat
 ```{r NUmpqua_AboveSteam - Stats}
 # Logger ID: 21433141 (WSC logger data)

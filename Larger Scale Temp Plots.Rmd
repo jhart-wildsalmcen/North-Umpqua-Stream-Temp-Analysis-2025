@@ -1,0 +1,332 @@
+---
+title: "Untitled"
+author: "J.Hart"
+date: "2026-02-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Steamboat above Big Bend}
+### Mean, Min, Max Temp Plot 
+
+# Plot data frame
+temp <- Steam_AboveBigBend
+
+x=as.Date(temp$longdate)
+y_lower = 20
+y_upper = Inf
+
+# Create temperature plot
+plot_21679180 <- ggplot() +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth = 1) +
+  geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 1) +
+  annotate("text", x = as.Date("2024-08-18"), y = 25, label = "Zone of Physiological Stress", size = 7, color ="red", fontface = "italic") +
+  scale_colour_manual("", 
+                      breaks = c("mean_temp", "min_temp", "max_temp"),
+                      values = c("black", "blue", "red"),
+                      labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(12,26,by= 4)) +
+  theme_bw() +
+  labs(title= "Steamboat above Big Bend Cr.",
+       y="Temperature (\u00B0C)", 
+       x="") +
+  theme(plot.title = element_text(size= 26, face="bold"),
+        axis.text=element_text(size= 22),
+        axis.title=element_text(size= 22),
+        legend.position = "none") 
+
+rm(temp)
+
+plot_21679180
+
+# Export plot to file
+ ggsave(plot_21679180, file="Figure Plots/Temp Plots/Larger Scale/Temp Plot_SteamboatAboveBigBend.png", height = 4, width = 7) #Figure Dimensions 4" x 6"
+```
+
+```{r Big Bend}
+## Mean, Min, Max Temp Plot 
+
+# Data frame for plot
+temp <- BigBend %>% 
+  filter(longdate > '2024-06-19' & longdate <= '2024-09-15')
+  
+x=as.Date(temp$longdate)
+y_lower = 20
+y_upper = Inf
+
+# Create temp plot
+plot_15170014 <- ggplot() +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth = 1) +
+  geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 1) +
+  
+  scale_colour_manual("", 
+                      breaks = c("mean_temp", "min_temp", "max_temp"),
+                      values = c("black", "blue", "red"),
+                      labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(12,24,by= 4)) +
+  theme_bw() +
+  labs(title= "Big Bend Cr. at mouth", y="Temperature (\u00B0C)", x="") +
+  theme(plot.title = element_text(size= 26, face="bold"),
+        axis.text=element_text(size= 22),
+        axis.title=element_text(size= 22),
+        legend.position = "none")
+
+rm(temp)
+
+plot_15170014
+
+# Export plot to file 
+ ggsave(plot_15170014, file="Figure Plots/Temp Plots/Larger Scale/Temp Plot_BigBend.png", height = 4, width = 7) #Figure Dimensions 4" x 6"
+```
+
+```{r Steamboat below Big Bend}
+### Mean, Min, Max Temp Plot 
+
+# Plot data frame
+temp <- Steam_BelowBigBend
+
+x=as.Date(temp$longdate)
+y_lower = 20
+y_upper = Inf
+
+# Create temp plot
+plot_21679175 <- ggplot() +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
+  geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 1) +
+  scale_colour_manual("", 
+                      breaks = c("mean_temp", "min_temp", "max_temp"),
+                      values = c("black", "blue", "red"),
+                      labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(12,24,by= 4)) +
+  theme_bw() +
+  labs(title= "Steamboat below Big Bend Cr.", y="Temperature (\u00B0C)", x="") +
+  theme(plot.title = element_text(size=26, face="bold"),
+        axis.text=element_text(size=22),
+        axis.title=element_text(size=22),
+        legend.position = "none") 
+ 
+
+rm(temp)
+
+plot_21679175
+
+# Export plot to file 
+ggsave(plot_21679175, file="Figure Plots/Temp Plots/Larger Scale/Temp Plot_SteamboatBelowBigBend.png", height = 4, width = 7) #Figure Dimensions 4" x 6"
+```
+
+```{r Steamboat Above Canton}
+## Mean, Min, Max Temp Plot 
+
+# Data frame for plot
+temp <- Steamboat_AboveCant %>% 
+  filter(longdate > '2024-06-19' & longdate <= '2024-09-15')
+
+x=as.Date(temp$longdate)
+y_lower = 20
+y_upper = Inf
+
+# Create temp plot
+plot_15170003 <- ggplot() +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
+  geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
+  geom_line(data=temp, aes(x=longdate,y=mean_temp, color="mean_temp"), linewidth =1.5) +
+  geom_line(data=temp, aes(x=longdate,y=min_temp, color = "min_temp"), linewidth =1) +
+  geom_line(data=temp, aes(x=longdate, y=max_temp, color= "max_temp"), linewidth =1) +
+  
+  scale_colour_manual("", 
+                      breaks = c("mean_temp", "min_temp", "max_temp"),
+                      values = c("black", "blue", "red"),
+                      labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(12,26,by=4)) +
+  theme_bw() +
+  labs(title= "Steamboat above Canton Cr.", y="Temperature (\u00B0C)", x="") +
+  theme(plot.title = element_text(size=26, face="bold"),
+        axis.text=element_text(size=22),
+        axis.title=element_text(size=22),
+        legend.position = "none")
+       
+rm(temp)
+
+plot_15170003
+
+# Export plot to file 
+ggsave(plot_15170003, file="Figure Plots/Temp Plots/Larger Scale/Temp Plot_SteamboatAboveCant.png", height = 4, width = 7) #Figure Dimensions 4" x 6"
+```
+
+```{r Upper Canton}
+### Mean, Min, Max Temp Plot 
+
+# Plot data frame
+temp <- UpperCanton
+
+x=as.Date(temp$longdate)
+y_lower = 20
+y_upper = Inf
+
+# Create temp plot
+plot_21679177 <- ggplot() +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
+  geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 1) +
+  
+  scale_colour_manual("", 
+                      breaks = c("mean_temp", "min_temp", "max_temp"),
+                      values = c("black", "blue", "red"),
+                      labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(12,24,by= 4)) +
+  theme_bw() +
+  labs(title= "Upper Canton Cr.", y="Temperature (\u00B0C)", x="") +
+  theme(plot.title = element_text(size=26, face="bold"),
+        axis.text=element_text(size=22), 
+        axis.title=element_text(size=22),
+        legend.position = "none")
+  
+rm(temp)
+
+plot_21679177
+
+# Export plot to file 
+ggsave(plot_21679177, file="Figure Plots/Temp Plots/Larger Scale/Temp Plot_UpperCanton.png", height = 4, width = 7) #Figure Dimensions 4" x 6"
+```
+
+```{r Lower Canton}
+### Mean, Min, Max Temp Plot 
+
+# Plot data frame
+temp <- LowerCanton
+
+x=as.Date(temp$longdate)
+y_lower = 20
+y_upper = Inf
+
+# Create temp plot
+plot_21679176 <- ggplot() +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
+  geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 1) +
+  
+  scale_colour_manual("", 
+                      breaks = c("mean_temp", "min_temp", "max_temp"),
+                      values = c("black", "blue", "red"),
+                      labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(12,24,by= 4)) +
+  theme_bw() +
+  labs(title= "Lower Canton Cr.", y="Temperature (\u00B0C)", x="") +
+  theme(plot.title = element_text(size=26, face="bold"),
+        axis.text=element_text(size=22), 
+        axis.title=element_text(size=22),
+        legend.position = "none")
+  
+rm(temp)
+
+plot_21679176
+
+# Export plot to file 
+ggsave(plot_21679176, file="Figure Plots/Temp Plots/Larger Scale/Temp Plot_LowerCanton.png", height = 4, width = 7) #Figure Dimensions 4" x 6"
+
+```
+
+
+```{r N Umpqua above Steam}
+## Mean, Min, Max Temp Plot 
+
+# Plot data frame
+temp <- NUmpqua_AboveSteam
+
+x=as.Date(temp$longdate)
+y_lower = 20
+y_upper = Inf
+
+# Create temp plot
+plot_21433141 <- ggplot() +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
+  geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
+  geom_line(data=temp, aes(x=as.Date(longdate),y=mean_temp, color="mean_temp"), linewidth = 1.5) +
+  geom_line(data=temp, aes(x=as.Date(longdate),y=min_temp, color = "min_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=as.Date(longdate), y=max_temp, color= "max_temp"), linewidth = 1) +
+  
+  scale_colour_manual("", 
+                      breaks = c("mean_temp", "min_temp", "max_temp"),
+                      values = c("black", "blue", "red"),
+                      labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = c(0,0)) +
+  scale_y_continuous(limits = c(9,27),breaks = seq(12,26,by=4)) +
+  theme_bw() +
+  labs(title= "N. Umpqua above Steamboat Cr.", y="Temperature (\u00B0C)", x="") +
+  theme(plot.title = element_text(size=26, face="bold"),
+        axis.text=element_text(size=22),
+        axis.title=element_text(size=22),
+        legend.position = "none") 
+
+rm(temp)
+
+plot_21433141
+
+# Export plot to file 
+ ggsave(plot_21433141, file="Figure Plots/Temp Plots/Larger Scale/Temp Plot_NUmpqua_AboveSteam.png", height = 4, width = 7) #Figure Dimensions 4" x 6"
+```
+
+```{r Fish Creek}
+## Mean, Min, Max Temp Plot 
+
+# Data frame for plot
+ temp <- FishCr %>% 
+  filter(longdate > '2024-06-19' & longdate <= '2024-09-15')
+
+x=as.Date(temp$longdate)
+y_lower = 20
+y_upper = Inf
+
+# Create temp plot
+plot_15110003 <- ggplot() +
+  geom_hline(yintercept = 20, linetype = "dotted", linewidth= 1) +
+  geom_ribbon(aes(x=x,ymin = y_lower, ymax = y_upper), fill = "red1", alpha = 0.10) + 
+  geom_line(data=temp, aes(x=longdate,y=mean_temp, color="mean_temp"), linewidth = 1.5) +
+  geom_line(data=temp, aes(x=longdate,y=min_temp, color = "min_temp"), linewidth = 1) +
+  geom_line(data=temp, aes(x=longdate, y=max_temp, color= "max_temp"), linewidth = 1) +
+  
+  scale_colour_manual("", 
+                      breaks = c("mean_temp", "min_temp", "max_temp"),
+                      values = c("black", "blue", "red"),
+                      labels = c("Mean Temp.", "Min Temp.", "Max Temp.")) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b") +
+  scale_y_continuous(limits = c(9,27),breaks = seq(12,26,by=4)) +
+  theme_bw() +
+  labs(title= "Fish Cr. at mouth", y="Temperature (\u00B0C)", x="") +
+  theme(plot.title = element_text(size=26, face="bold"),
+        axis.text=element_text(size=22),
+        axis.title=element_text(size=22),
+        legend.position = "none")
+       
+
+rm(temp)
+
+plot_15110003
+
+# Export plot to file 
+ ggsave(plot_15110003, file="Figure Plots/Temp Plots/Larger Scale/Temp Plot_FishCreek.png", height = 4, width = 7) #Figure Dimensions 4" x 6"
+
+```
+
